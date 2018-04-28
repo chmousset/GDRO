@@ -16,7 +16,7 @@
 
 #include "ch.h"
 #include "hal.h"
-
+#include "ch_test.h"
 #include "chprintf.h"
 #include "shell.h"
 
@@ -93,11 +93,17 @@ int main(void) {
 	 * - Kernel initialization, the main() function becomes a thread and the
 	 *   RTOS is active.
 	 */
-	// halInit();
-	// chSysInit();
 		// Initialize ChibiOS/HAL and ChibiOS/RT. No need to do this as uGFX does that for you. See GFX_OS_NO_INIT setting.
-	// halInit();
-	// chSysInit();
+	halInit();
+	chSysInit();
+
+	/*
+	 * Creating the blinker threads.
+	 */
+	chThdCreateStatic(waThread1, sizeof(waThread1),
+										NORMALPRIO + 10, Thread1, NULL);
+	chThdCreateStatic(waThread2, sizeof(waThread2),
+										NORMALPRIO + 10, Thread2, NULL);
 
 	// Initialize uGFX (This initializes ChibiOS/HAL and ChibiOS/RT internally. See GFX_OS_NO_INIT setting.
 	gfxInit();
@@ -110,13 +116,6 @@ int main(void) {
 	gwinSetDefaultFont(font1);
 	gwinSetDefaultStyle(&WhiteWidgetStyle, FALSE);
 
-	/*
-	 * Creating the blinker threads.
-	 */
-	chThdCreateStatic(waThread1, sizeof(waThread1),
-										NORMALPRIO + 10, Thread1, NULL);
-	chThdCreateStatic(waThread2, sizeof(waThread2),
-										NORMALPRIO + 10, Thread2, NULL);
 
 
 	// Draw some shapes using the GDISP module. API can be found here: http://api.ugfx.io/group___g_d_i_s_p.html
@@ -134,21 +133,21 @@ int main(void) {
 
 	// Create a slider widget for demo purposes
 	{
-	   GWidgetInit wi;
+		 GWidgetInit wi;
 
-	   gwinWidgetClearInit(&wi);
+		 gwinWidgetClearInit(&wi);
 
-	   wi.g.x = 10;
-	   wi.g.y = 260;
-	   wi.g.width = 220;
-	   wi.g.height = 50;
-	   wi.g.show = TRUE;
-	   wi.customDraw = 0;
-	   wi.customParam = 0;
-	   wi.customStyle = 0;
-	   wi.text = "Slider";
-	   ghSlider1 = gwinSliderCreate(0, &wi);
-	   gwinShow(ghSlider1);
+		 wi.g.x = 10;
+		 wi.g.y = 260;
+		 wi.g.width = 220;
+		 wi.g.height = 50;
+		 wi.g.show = TRUE;
+		 wi.customDraw = 0;
+		 wi.customParam = 0;
+		 wi.customStyle = 0;
+		 wi.text = "Slider";
+		 ghSlider1 = gwinSliderCreate(0, &wi);
+		 gwinShow(ghSlider1);
 	}
 
 	/*
@@ -172,18 +171,17 @@ int main(void) {
 	usbStart(serusbcfg.usbp, &usbcfg);
 	usbConnectBus(serusbcfg.usbp);
 
-
 	/*
 	 * Normal main() thread activity, spawning shells.
 	 */
 	while (true) {
 		if (SDU1.config->usbp->state == USB_ACTIVE) {
 			thread_t *shelltp = chThdCreateFromHeap(NULL, SHELL_WA_SIZE,
-													"shell", NORMALPRIO + 1,
-													shellThread, (void *)&shell_cfg1);
+																							"shell", NORMALPRIO + 1,
+																							shellThread, (void *)&shell_cfg1);
 			chThdWait(shelltp);               /* Waiting termination.             */
 		}
-		// chThdSleepMilliseconds(1000);
-		gfxSleepMilliseconds(1000);
+		chThdSleepMilliseconds(1000);
 	}
+
 }
