@@ -87,6 +87,7 @@ PROJECT = ch
 
 # Imported source files and paths
 CHIBIOS = ChibiOS
+GFXLIB = ugfx
 
 # Licensing files.
 include $(CHIBIOS)/os/license/license.mk
@@ -107,6 +108,10 @@ include $(CHIBIOS)/test/oslib/oslib_test.mk
 include $(CHIBIOS)/os/hal/lib/streams/streams.mk
 include $(CHIBIOS)/os/various/shell/shell.mk
 
+# ugfx files
+include $(GFXLIB)/gfx.mk
+include $(GFXLIB)/boards/base/STM32F429i-Discovery/chibios/board.mk
+
 # Define linker script file here
 LDSCRIPT= $(STARTUPLD)/STM32F429xI.ld
 
@@ -114,6 +119,7 @@ LDSCRIPT= $(STARTUPLD)/STM32F429xI.ld
 # setting.
 CSRC = $(ALLCSRC) \
        $(TESTSRC) \
+       $(GFXSRC) \
        usbcfg.c main.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
@@ -144,7 +150,7 @@ TCPPSRC =
 ASMSRC = $(ALLASMSRC)
 ASMXSRC = $(ALLXASMSRC)
 
-INCDIR = $(ALLINC) $(TESTINC)
+INCDIR = $(ALLINC) $(TESTINC) $(GFXINC)
 
 #
 # Project, sources and paths
