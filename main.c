@@ -1,18 +1,5 @@
-/*
-		ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
-
-		Licensed under the Apache License, Version 2.0 (the "License");
-		you may not use this file except in compliance with the License.
-		You may obtain a copy of the License at
-
-				http://www.apache.org/licenses/LICENSE-2.0
-
-		Unless required by applicable law or agreed to in writing, software
-		distributed under the License is distributed on an "AS IS" BASIS,
-		WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-		See the License for the specific language governing permissions and
-		limitations under the License.
-*/
+// Copyright 2018 Charles-Henri Mousset
+// DRO display for iGaging scales
 
 #include "ch.h"
 #include "hal.h"
@@ -30,9 +17,93 @@ static font_t font1;
 #define TRUE 1
 #define FALSE 0
 
-/*
- * Red LED blinker thread, times are in milliseconds.
- */
+#define N_AXIS		3
+
+// Display widgets
+static GHandle ghLabel[N_AXIS];
+static GHandle   ghButtonInc[N_AXIS];
+
+static GHandle   ghCheckbox1;
+
+static GListener gl;
+
+int pos_um[N_AXIS];
+
+const GWidgetStyle MyCustomStyle = {
+	HTML2COLOR(0x000000),			// window background
+	HTML2COLOR(0x2A8FCD),			// focused
+ 
+	// enabled color set
+	{
+		HTML2COLOR(0xfffc42),		// text
+		HTML2COLOR(0x000000),		// edge
+		HTML2COLOR(0x101010),		// fill
+		HTML2COLOR(0x00E000)		// progress - active area
+	},
+ 
+	// disabled color set
+	{
+		HTML2COLOR(0xC0C0C0),		// text
+		HTML2COLOR(0x808080),		// edge
+		HTML2COLOR(0xE0E0E0),		// fill
+		HTML2COLOR(0xC0E0C0)		// progress - active area
+	},
+ 
+	// pressed color set
+	{
+		HTML2COLOR(0x404040),		// text
+		HTML2COLOR(0x404040),		// edge
+		HTML2COLOR(0x808080),		// fill
+		HTML2COLOR(0x00E000)		// progress - active area
+	}
+};
+
+void input_scale_loop()
+{
+	static int cnt_bits = 0;
+	static int cnt_pauses = 0;
+	static int pos[N_AXIS];
+	int i;
+	static bool_t half_bit=true;
+
+	if(cnt_pauses)
+	{
+		cnt_pauses--;
+		return;
+	}
+
+	if(cnt_bits < 21)
+	{
+		if(half_bit)
+		{
+			half_bit = false;
+			palSetPad(GPIOB, 4);
+			return;
+		}
+		half_bit = true;
+		palClearPad(GPIOB, 4);
+		cnt_bits++;
+		
+		pos[0] = pos[0] + (palReadPad(GPIOB, 7) ? 1<<cnt_bits : 0);
+		// pos[1] = pos[1] + (palReadPad(GPIOB, 7) ? 1<<cnt_bits : 0);
+		// pos[2] = pos[2] + (palReadPad(GPIOB, 7) ? 1<<cnt_bits : 0);
+		pos[1] = pos[2] = pos[0];
+	}
+	else if(cnt_bits++ == 21)
+	{
+		for(i=0; i<N_AXIS; i++)
+		{
+			if(pos[i] & (1<<20))
+				pos[i] = pos[i] | 0xFFF00000; 	// sign extension
+			pos_um[i] = pos[i] * 10;
+			pos[i] = 0;
+		}
+		cnt_bits = 0;
+		cnt_pauses = 40;
+		half_bit = true;
+	}
+}
+
 static THD_WORKING_AREA(waThread1, 128);
 static THD_FUNCTION(Thread1, arg) {
 
@@ -46,19 +117,126 @@ static THD_FUNCTION(Thread1, arg) {
 	}
 }
 
+
+static THD_WORKING_AREA(waThreadScale, 128);
+static THD_FUNCTION(ThreadScale, arg) {
+	int cnt_bits = 0;
+	int pos[N_AXIS];
+	int i;
+	
+	(void)arg;
+	chRegSetThreadName("scale");
+	palSetPadMode(GPIOB, 4, PAL_MODE_OUTPUT_PUSHPULL);
+	palSetPadMode(GPIOB, 7, PAL_MODE_INPUT);
+	while (true) {
+		// if(cnt_bits++ < 21)
+		// {
+		// 	palSetPad(GPIOB, 4);
+		// 	chThdSleep(1);
+		// 	palClearPad(GPIOB, 4);
+		// 	pos[0] = pos[0] + (palReadPad(GPIOB, 7) ? 1<<cnt_bits : 0);
+		// 	pos[1] = pos[1] + (palReadPad(GPIOB, 7) ? 1<<cnt_bits : 0);
+		// 	pos[2] = pos[2] + (palReadPad(GPIOB, 7) ? 1<<cnt_bits : 0);
+		// 	chThdSleep(1);
+		// }
+		// else
+		// {
+		// 	for(i=0; i<N_AXIS; i++)
+		// 	{
+		// 		if(pos[i] & (1<<20))
+		// 			pos[i] = pos[i] | 0xFFF00000; 	// sign extension
+		// 		pos_um[i] = pos[i] * 10;
+		// 		pos[i] = 0;
+		// 	}
+		// 	cnt_bits = 0;
+		// 	chThdSleep(40*2);
+		// }
+		input_scale_loop();
+		chThdSleep(1);
+	}
+}
+
 /*
  * Green LED blinker thread, times are in milliseconds.
  */
-static THD_WORKING_AREA(waThread2, 128);
+static THD_WORKING_AREA(waThread2, 4096);
 static THD_FUNCTION(Thread2, arg) {
 
+	int old_pos[N_AXIS];
+	int inc_pos[N_AXIS];
+	int disp[N_AXIS];
+	int i, j;
+
+	char buf[64], *ptr;
+	GEvent* pe;
+
+	bool_t inc_mode[N_AXIS];
+	bool_t zero_mode = false;
+
 	(void)arg;
-	chRegSetThreadName("blinker2");
+	chRegSetThreadName("display");
+	for(i=0; i<N_AXIS; i++)
+		old_pos[i] = 1E9;
+
 	while (true) {
-		palClearPad(GPIOG, GPIOG_LED3_GREEN);
-		chThdSleepMilliseconds(250);
-		palSetPad(GPIOG, GPIOG_LED3_GREEN);
-		chThdSleepMilliseconds(250);
+
+		chThdSleepMilliseconds(100);
+
+		if(!zero_mode)
+
+		pe = geventEventWait(&gl, 10);
+ 
+		switch(pe->type) {
+			case GEVENT_GWIN_BUTTON:
+				for(i=0; i<N_AXIS; i++)
+				{
+					if (((GEventGWinButton*)pe)->gwin == ghButtonInc[i]) {
+						inc_mode[i] = !inc_mode[i];
+						if(inc_mode[i])
+							inc_pos[i] = pos_um[i];
+						gwinSetText(ghButtonInc[i], inc_mode[i] ? "INC" : "ABS", TRUE);
+						old_pos[i] = 1E9;	// forces refresh
+					}
+				}
+				break;
+			default:
+				break;
+		};
+
+		for(i=0; i<N_AXIS; i++)
+		{
+			if(old_pos[i] != pos_um[i])
+			{
+				old_pos[i] = pos_um[i];
+				disp[i] = inc_mode[i] ? pos_um[i] - inc_pos[i] : pos_um[i];
+
+				// This version does not use sprintf
+				ptr = buf;
+				if(disp[i] < 0)
+				{
+					*ptr++ = '-';
+					disp[i] = -1 * disp[i];
+				}
+				else
+					*ptr++ = ' ';
+
+				j = 100000;
+				while(j)
+				{
+					*ptr++ = '0' + (disp[i] / j);
+					disp[i] = disp[i] % j;
+					if(j==100)
+						*ptr++ = '.';
+					j = j/10;
+				}
+				*ptr++ = 0;
+				// sprintf(buf, "%c%d.%02d", disp[i] < 0 ? '-' : ' ', abs(disp[i]) / 1000,
+				// 		(abs(disp[i]) % 1000) / 10);
+				gwinSetText(ghLabel[i], buf, TRUE);
+				chThdSleepMilliseconds(1);
+			}
+		}
+		palTogglePad(GPIOG, GPIOG_LED3_GREEN);
 	}
 }
 
@@ -68,7 +246,38 @@ static THD_FUNCTION(Thread2, arg) {
 
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)
 
+void shl_rotate(BaseSequentialStream *chp, int argc, char *argv[])
+{
+	switch(argc)
+	{
+		case 0:
+			chprintf(chp, "Please specify orientation\r\n");
+			break;
+		case 1:
+			switch(atoi(argv[0]))
+			{
+				default:
+					chprintf(chp, "orientation invalid: %d", atoi(argv[0]));
+					break;
+				case 0:
+					gdispSetOrientation(GDISP_ROTATE_0);
+					break;
+				case 90:
+					gdispSetOrientation(GDISP_ROTATE_90);
+					break;
+				case 180:
+					gdispSetOrientation(GDISP_ROTATE_180);
+					break;
+				case 270:
+					gdispSetOrientation(GDISP_ROTATE_270);
+					break;
+			};
+	};
+}
+
+
 static const ShellCommand commands[] = {
+	{"rotate", shl_rotate},
 	{NULL, NULL}
 };
 
@@ -84,7 +293,9 @@ static const ShellConfig shell_cfg1 = {
 /*
  * Application entry point.
  */
-int main(void) {
+int main(void)
+{
+	int i;
 
 	/*
 	 * System initializations.
@@ -97,58 +308,131 @@ int main(void) {
 	halInit();
 	chSysInit();
 
-	/*
-	 * Creating the blinker threads.
-	 */
-	chThdCreateStatic(waThread1, sizeof(waThread1),
-										NORMALPRIO + 10, Thread1, NULL);
-	chThdCreateStatic(waThread2, sizeof(waThread2),
-										NORMALPRIO + 10, Thread2, NULL);
 
 	// Initialize uGFX (This initializes ChibiOS/HAL and ChibiOS/RT internally. See GFX_OS_NO_INIT setting.
 	gfxInit();
 
+	/*
+	 * Creating the blinker threads.
+	 */
+	// chThdCreateStatic(waThread1, sizeof(waThread1),
+	// 									NORMALPRIO + 10, Thread1, NULL);
+
 	// Prepare some resources
-	font1 = gdispOpenFont("DejaVuSans24_aa");
+	font1 = gdispOpenFont("DejaVuSans32_aa");
 	// gdispImageOpenFile(&img1, "smiley.png");
 
 	// Set the widget defaults
 	gwinSetDefaultFont(font1);
-	gwinSetDefaultStyle(&WhiteWidgetStyle, FALSE);
+	gwinSetDefaultStyle(&MyCustomStyle, FALSE);
 
 
 
 	// Draw some shapes using the GDISP module. API can be found here: http://api.ugfx.io/group___g_d_i_s_p.html
-	gdispClear(White);
-	gdispFillArea(10, 10, 50, 120, Blue);
-	gdispDrawLine(25, 20, 150, 80, Red);
-	gdispDrawCircle(180, 80, 65, Green);
+	gdispClear(Black);
+	// gdispFillArea(10, 10, 50, 120, Blue);
+	// gdispDrawLine(25, 20, 150, 80, Red);
+	// gdispDrawCircle(180, 80, 65, Green);
 
 	// Render some text (See https://wiki.ugfx.io/index.php/Font_rendering)
-	gdispDrawString(20, 220, "Hello uGFX!", font1, Black);
+	gdispDrawString(5, 8+10+5, "X", font1, Green);
+	gdispDrawString(5, 8+10+75, "Y", font1, Green);
+	gdispDrawString(5, 8+10+145, "Z", font1, Green);
 
 	// Render an image (See https://wiki.ugfx.io/index.php/Images)
 	// Note that we're using the ROMFS to load the image from the microcontrollers flash. (See https://wiki.ugfx.io/index.php/ROMFS)
 	// gdispImageDraw(&img1, 50, 80, img1.width, img1.width, 0, 0);
 
 	// Create a slider widget for demo purposes
+	// {
+	// 	 GWidgetInit wi;
+
+	// 	 gwinWidgetClearInit(&wi);
+
+	// 	 wi.g.x = 0;
+	// 	 wi.g.y = 200;
+	// 	 wi.g.width = 280;
+	// 	 wi.g.height = 40;
+	// 	 wi.g.show = TRUE;
+	// 	 wi.customDraw = 0;
+	// 	 wi.customParam = 0;
+	// 	 wi.customStyle = 0;
+	// 	 wi.text = "Slider";
+	// 	 ghSlider1 = gwinSliderCreate(0, &wi);
+	// 	 gwinShow(ghSlider1);
+	// }
 	{
-		 GWidgetInit wi;
-
-		 gwinWidgetClearInit(&wi);
-
-		 wi.g.x = 10;
-		 wi.g.y = 260;
-		 wi.g.width = 220;
-		 wi.g.height = 50;
-		 wi.g.show = TRUE;
-		 wi.customDraw = 0;
-		 wi.customParam = 0;
-		 wi.customStyle = 0;
-		 wi.text = "Slider";
-		 ghSlider1 = gwinSliderCreate(0, &wi);
-		 gwinShow(ghSlider1);
+		GWidgetInit		wi;
+	 
+		// Apply some default values for GWIN
+		wi.customDraw = 0;
+		wi.customParam = 0;
+		wi.customStyle = 0;
+		wi.g.show = TRUE;
+	 
+		// Apply the label parameters	
+		wi.g.y = 20;
+		wi.g.x = 40;
+		wi.g.width = 155;
+		wi.g.height = 40;
+		wi.text = "Label 1";
+	 
+		// Create the actual label
+		for(i=0; i<N_AXIS; i++)
+		{
+			ghLabel[i] = gwinLabelCreate(NULL, &wi);
+			wi.g.y += 70;
+		}
 	}
+
+	// {
+	// 	GWidgetInit	wi;
+	 
+	// 	// Apply some default values for GWIN
+	// 	wi.customDraw = 0;
+	// 	wi.customParam = 0;
+	// 	wi.customStyle = 0;
+	// 	wi.g.show = TRUE;
+	 
+	// 	// Apply the checkbox parameters	
+	// 	wi.g.width = 100;		// includes text
+	// 	wi.g.height = 40;
+	// 	wi.g.y = 10;
+	// 	wi.g.x = 200;
+	// 	wi.text = "INC";
+	 
+	// 	// Create the actual checkbox 
+	// 	ghCheckbox1 = gwinCheckboxCreate(NULL, &wi);
+	// }
+	{
+		GWidgetInit	wi;
+	 
+		// Apply some default values for GWIN
+		gwinWidgetClearInit(&wi);
+		wi.g.show = TRUE;
+	 
+		// Apply the button parameters	
+		wi.g.width = 100;
+		wi.g.height = 60;
+		wi.g.y = 10;
+		wi.g.x = 220;
+		wi.text = "ABS";
+	 
+		// Create the actual button
+		for(i=0; i<N_AXIS; i++)
+		{
+			ghButtonInc[i] = gwinButtonCreate(NULL, &wi);
+			wi.g.y += 70;
+		}
+	}
+	// We want to listen for widget events
+	geventListenerInit(&gl);
+	gwinAttachListener(&gl);
+
+	chThdCreateStatic(waThreadScale, sizeof(waThreadScale),
+						HIGHPRIO, ThreadScale, NULL);
+	chThdCreateStatic(waThread2, sizeof(waThread2),
+						NORMALPRIO, Thread2, NULL);
 
 	/*
 	 * Shell manager initialization.
@@ -177,11 +461,10 @@ int main(void) {
 	while (true) {
 		if (SDU1.config->usbp->state == USB_ACTIVE) {
 			thread_t *shelltp = chThdCreateFromHeap(NULL, SHELL_WA_SIZE,
-																							"shell", NORMALPRIO + 1,
-																							shellThread, (void *)&shell_cfg1);
+													"shell", NORMALPRIO + 1,
+													shellThread, (void *)&shell_cfg1);
 			chThdWait(shelltp);               /* Waiting termination.             */
 		}
-		chThdSleepMilliseconds(1000);
+		chThdSleepMilliseconds(100);
 	}
-
 }

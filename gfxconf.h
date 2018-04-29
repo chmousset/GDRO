@@ -86,15 +86,15 @@
 //#define GDISP_NEED_CONVEX_POLYGON                    GFXOFF
 //#define GDISP_NEED_SCROLL                            GFXOFF
 //#define GDISP_NEED_PIXELREAD                         GFXOFF
-//#define GDISP_NEED_CONTROL                           GFXOFF
+#define GDISP_NEED_CONTROL                           GFXON
 //#define GDISP_NEED_QUERY                             GFXOFF
 #define GDISP_NEED_MULTITHREAD                         GFXON
 //#define GDISP_NEED_STREAMING                         GFXOFF
 #define GDISP_NEED_TEXT                                GFXON
-   #define GDISP_NEED_TEXT_WORDWRAP                    GFXON
+   #define GDISP_NEED_TEXT_WORDWRAP                    GFXOFF
 //    #define GDISP_NEED_TEXT_BOXPADLR                 1
 //    #define GDISP_NEED_TEXT_BOXPADTB                 1
-      #define GDISP_NEED_ANTIALIAS                     GFXOFF
+      #define GDISP_NEED_ANTIALIAS                     GFXON
       #define GDISP_NEED_UTF8                          GFXON
       #define GDISP_NEED_TEXT_KERNING                  GFXON
 //    #define GDISP_INCLUDE_FONT_UI1                   GFXOFF
@@ -114,7 +114,7 @@
 //    #define GDISP_INCLUDE_FONT_DEJAVUSANS16_AA       GFXOFF
 //    #define GDISP_INCLUDE_FONT_DEJAVUSANS20_AA       GFXOFF
       #define GDISP_INCLUDE_FONT_DEJAVUSANS24_AA       GFXON
-//    #define GDISP_INCLUDE_FONT_DEJAVUSANS32_AA       GFXOFF
+   #define GDISP_INCLUDE_FONT_DEJAVUSANS32_AA       GFXON
 //    #define GDISP_INCLUDE_FONT_DEJAVUSANSBOLD12_AA   GFXOFF
 //    #define GDISP_INCLUDE_USER_FONTS                 GFXOFF
 
@@ -157,7 +157,7 @@
 //#define GDISP_NEED_PIXMAP                            GFXOFF
 //    #define GDISP_NEED_PIXMAP_IMAGE                  GFXOFF
 
-//#define GDISP_DEFAULT_ORIENTATION                    GDISP_ROTATE_LANDSCAPE    // If not defined the native hardware orientation is used.
+#define GDISP_DEFAULT_ORIENTATION                    GDISP_ROTATE_LANDSCAPE    // If not defined the native hardware orientation is used.
 //#define GDISP_LINEBUF_SIZE                           128
 //#define GDISP_STARTUP_COLOR                          GFX_BLACK
 #define GDISP_NEED_STARTUP_LOGO                        GFXOFF
@@ -213,15 +213,15 @@
 
 #define GWIN_NEED_WIDGET                             GFXON
 //#define GWIN_FOCUS_HIGHLIGHT_WIDTH                   1
-//    #define GWIN_NEED_LABEL                          GFXOFF
+   #define GWIN_NEED_LABEL                          GFXON
 //        #define GWIN_LABEL_ATTRIBUTE                 GFXOFF
-//    #define GWIN_NEED_BUTTON                         GFXOFF
-//        #define GWIN_BUTTON_LAZY_RELEASE             GFXOFF
+   #define GWIN_NEED_BUTTON                         GFXON
+       #define GWIN_BUTTON_LAZY_RELEASE             GFXON
    #define GWIN_NEED_SLIDER                         GFXON
 //        #define GWIN_SLIDER_NOSNAP                   GFXOFF
 //        #define GWIN_SLIDER_DEAD_BAND                5
 //        #define GWIN_SLIDER_TOGGLE_INC               20
-//    #define GWIN_NEED_CHECKBOX                       GFXOFF
+   #define GWIN_NEED_CHECKBOX                       GFXON
 //    #define GWIN_NEED_IMAGE                          GFXOFF
 //        #define GWIN_NEED_IMAGE_ANIMATION            GFXOFF
 //    #define GWIN_NEED_RADIO                          GFXOFF
@@ -286,7 +286,7 @@
 #define GINPUT_NEED_MOUSE                            GFXON
 //    #define GINPUT_TOUCH_STARTRAW                    GFXOFF
 //    #define GINPUT_TOUCH_NOTOUCH                     GFXOFF
-//    #define GINPUT_TOUCH_NOCALIBRATE                 GFXOFF
+   // #define GINPUT_TOUCH_NOCALIBRATE                 GFXON
 //    #define GINPUT_TOUCH_NOCALIBRATE_GUI             GFXOFF
 //    #define GINPUT_MOUSE_POLL_PERIOD                 25
 //    #define GINPUT_MOUSE_CLICK_TIME                  300

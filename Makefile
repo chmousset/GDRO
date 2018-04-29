@@ -124,6 +124,7 @@ CSRC = $(STARTUPSRC) \
        $(STREAMSSRC) \
        $(SHELLSRC) \
        $(GFXSRC) \
+       $(CHIBIOS)/os/various/syscalls.c \
        usbcfg.c main.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
