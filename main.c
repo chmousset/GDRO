@@ -10,6 +10,7 @@
 #include "usbcfg.h"
 
 #include "gfx.h"
+#include "ugfx/src/gwin/gwin_keyboard_layout.h"
 
 static GHandle ghSlider1;
 static font_t font1;
@@ -24,6 +25,9 @@ static GHandle ghLabel[N_AXIS];
 static GHandle   ghButtonInc[N_AXIS];
 
 static GHandle   ghCheckbox1;
+
+static GHandle		ghConsole;
+static GHandle		ghKeyboard;
 
 static GListener gl;
 
@@ -285,6 +289,40 @@ static const ShellConfig shell_cfg1 = {
 	(BaseSequentialStream *)&SDU1,
 	commands
 };
+
+
+static const GVSpecialKey kbKeys[] = {
+	{ "\010", "\b", 0, 0 },							// \005 (5)	= Backspace
+	{ "\015", "\r", 0, 0 },								// \006 (6)	= Enter 1
+};
+static const char *kbRows[] = {"789", "456", "123", "-0.", "X\001\002", 0 };
+static const GVKeySet kbSet[] = { kbRows, 0 };
+const GVKeyTable kbNumPad = { kbKeys, kbSet };
+
+
+static void createKeyboard(void) {
+	GWidgetInit		wi;
+
+	gwinWidgetClearInit(&wi);
+
+	// Create the console - set colors before making it visible
+	wi.g.show = FALSE;
+	wi.g.x = 0; wi.g.y = 0;
+	wi.g.width = gdispGetWidth(); wi.g.height = gdispGetHeight()/4;
+	ghConsole = gwinConsoleCreate(0, &wi.g);
+	gwinSetColor(ghConsole, GFX_BLACK);
+	gwinSetBgColor(ghConsole, HTML2COLOR(0xF0F0F0));
+	gwinShow(ghConsole);
+	gwinClear(ghConsole);
+
+	// Create the keyboard
+	wi.g.show = TRUE;
+	wi.g.x = 0; wi.g.y = gdispGetHeight()/4;
+	wi.g.width = gdispGetWidth(); wi.g.height = gdispGetHeight()*3/4;
+	ghKeyboard = gwinKeyboardCreate(0, &wi);
+}
+
+
 
 /*===========================================================================*/
 /* Initialization and main thread.                                           */
