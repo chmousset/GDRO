@@ -201,7 +201,7 @@
 //    #define GWIN_NEED_FLASHING                       GFXOFF
 //        #define GWIN_FLASHING_PERIOD                 250
 
-//#define GWIN_NEED_CONSOLE                            GFXOFF
+#define GWIN_NEED_CONSOLE                            GFXON
 //    #define GWIN_CONSOLE_USE_HISTORY                 GFXOFF
 //        #define GWIN_CONSOLE_HISTORY_AVERAGING       GFXOFF
 //        #define GWIN_CONSOLE_HISTORY_ATCREATE        GFXOFF
@@ -229,8 +229,8 @@
 //        #define GWIN_NEED_LIST_IMAGES                GFXOFF
 //    #define GWIN_NEED_PROGRESSBAR                    GFXOFF
 //        #define GWIN_PROGRESSBAR_AUTO                GFXOFF
-//    #define GWIN_NEED_KEYBOARD                       GFXOFF
-//        #define GWIN_KEYBOARD_DEFAULT_LAYOUT         VirtualKeyboard_English1
+   #define GWIN_NEED_KEYBOARD                       GFXON
+       #define GWIN_KEYBOARD_DEFAULT_LAYOUT         kbNumPad
 //        #define GWIN_NEED_KEYBOARD_ENGLISH1          GFXON
 //    #define GWIN_NEED_TEXTEDIT                       GFXOFF
 //    #define GWIN_FLAT_STYLING                        GFXOFF
@@ -291,8 +291,8 @@
 //    #define GINPUT_MOUSE_POLL_PERIOD                 25
 //    #define GINPUT_MOUSE_CLICK_TIME                  300
 //    #define GINPUT_TOUCH_CXTCLICK_TIME               700
-//    #define GINPUT_TOUCH_USER_CALIBRATION_LOAD       GFXOFF
-//    #define GINPUT_TOUCH_USER_CALIBRATION_SAVE       GFXOFF
+   #define GINPUT_TOUCH_USER_CALIBRATION_LOAD       GFXON
+   #define GINPUT_TOUCH_USER_CALIBRATION_SAVE       GFXON
 //    #define GMOUSE_DRIVER_LIST                       GMOUSEVMT_Win32, GMOUSEVMT_Win32
 //    #define GINPUT_TOUCH_CALIBRATION_FONT1           "* Double"
 //    #define GINPUT_TOUCH_CALIBRATION_FONT2           "* Narrow"

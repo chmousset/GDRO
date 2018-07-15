@@ -12,26 +12,59 @@
 #include "gfx.h"
 #include "ugfx/src/gwin/gwin_keyboard_layout.h"
 
-static GHandle ghSlider1;
-static font_t font1;
+#include "scale_master.h"
+#include "scale_slave.h"
+#include <stdlib.h>
+#include <string.h>
+
 
 #define TRUE 1
 #define FALSE 0
 
 #define N_AXIS		3
 
+SCALEMASTERPrivdata scale_x_privdata;
+SCALESLAVEPrivdata scale_y_privdata;
+SCALEMASTERPrivdata scale_z_privdata;
+SCALEDriver scales[] =
+{
+	{
+		.type = SCALE_MASTER_IGAGING,
+		.port_clk = GPIOB,
+		.pin_clk = 4,
+		.port_data = GPIOB,
+		.pin_data = 7,
+		.privdata = &scale_x_privdata
+	},
+	{
+		.type = SCALE_SLAVE_24B,
+		.port_clk = GPIOA,
+		.pin_clk = 7,
+		.port_data = GPIOA,
+		.pin_data = 5,
+		.privdata = &scale_y_privdata
+	},
+	{
+		.type = SCALE_MASTER_IGAGING,
+		.port_clk = GPIOC,
+		.pin_clk = 3,
+		.port_data = GPIOC,
+		.pin_data = 8,
+		.privdata = &scale_z_privdata
+	},
+	{.type = 0}
+};
+
+
 // Display widgets
-static GHandle ghLabel[N_AXIS];
-static GHandle   ghButtonInc[N_AXIS];
+static font_t font1;
+static GHandle ghLabel[N_AXIS*2];
+static GHandle ghButtonInc[N_AXIS];
 
-static GHandle   ghCheckbox1;
-
-static GHandle		ghConsole;
-static GHandle		ghKeyboard;
+static GHandle ghConsole;
+static GHandle ghKeyboard;
 
 static GListener gl;
-
-int pos_um[N_AXIS];
 
 const GWidgetStyle MyCustomStyle = {
 	HTML2COLOR(0x000000),			// window background
@@ -62,109 +95,9 @@ const GWidgetStyle MyCustomStyle = {
 	}
 };
 
-void input_scale_loop()
-{
-	static int cnt_bits = 0;
-	static int cnt_pauses = 0;
-	static int pos[N_AXIS];
-	int i;
-	static bool_t half_bit=true;
-
-	if(cnt_pauses)
-	{
-		cnt_pauses--;
-		return;
-	}
-
-	if(cnt_bits < 21)
-	{
-		if(half_bit)
-		{
-			half_bit = false;
-			palSetPad(GPIOB, 4);
-			return;
-		}
-		half_bit = true;
-		palClearPad(GPIOB, 4);
-		cnt_bits++;
-		
-		pos[0] = pos[0] + (palReadPad(GPIOB, 7) ? 1<<cnt_bits : 0);
-		// pos[1] = pos[1] + (palReadPad(GPIOB, 7) ? 1<<cnt_bits : 0);
-		// pos[2] = pos[2] + (palReadPad(GPIOB, 7) ? 1<<cnt_bits : 0);
-		pos[1] = pos[2] = pos[0];
-	}
-	else if(cnt_bits++ == 21)
-	{
-		for(i=0; i<N_AXIS; i++)
-		{
-			if(pos[i] & (1<<20))
-				pos[i] = pos[i] | 0xFFF00000; 	// sign extension
-			pos_um[i] = pos[i] * 10;
-			pos[i] = 0;
-		}
-		cnt_bits = 0;
-		cnt_pauses = 40;
-		half_bit = true;
-	}
-}
-
-static THD_WORKING_AREA(waThread1, 128);
-static THD_FUNCTION(Thread1, arg) {
-
-	(void)arg;
-	chRegSetThreadName("blinker1");
-	while (true) {
-		palClearPad(GPIOG, GPIOG_LED4_RED);
-		chThdSleepMilliseconds(500);
-		palSetPad(GPIOG, GPIOG_LED4_RED);
-		chThdSleepMilliseconds(500);
-	}
-}
-
-
-static THD_WORKING_AREA(waThreadScale, 128);
-static THD_FUNCTION(ThreadScale, arg) {
-	int cnt_bits = 0;
-	int pos[N_AXIS];
-	int i;
-	
-	(void)arg;
-	chRegSetThreadName("scale");
-	palSetPadMode(GPIOB, 4, PAL_MODE_OUTPUT_PUSHPULL);
-	palSetPadMode(GPIOB, 7, PAL_MODE_INPUT);
-	while (true) {
-		// if(cnt_bits++ < 21)
-		// {
-		// 	palSetPad(GPIOB, 4);
-		// 	chThdSleep(1);
-		// 	palClearPad(GPIOB, 4);
-		// 	pos[0] = pos[0] + (palReadPad(GPIOB, 7) ? 1<<cnt_bits : 0);
-		// 	pos[1] = pos[1] + (palReadPad(GPIOB, 7) ? 1<<cnt_bits : 0);
-		// 	pos[2] = pos[2] + (palReadPad(GPIOB, 7) ? 1<<cnt_bits : 0);
-		// 	chThdSleep(1);
-		// }
-		// else
-		// {
-		// 	for(i=0; i<N_AXIS; i++)
-		// 	{
-		// 		if(pos[i] & (1<<20))
-		// 			pos[i] = pos[i] | 0xFFF00000; 	// sign extension
-		// 		pos_um[i] = pos[i] * 10;
-		// 		pos[i] = 0;
-		// 	}
-		// 	cnt_bits = 0;
-		// 	chThdSleep(40*2);
-		// }
-		input_scale_loop();
-		chThdSleep(1);
-	}
-}
-
-/*
- * Green LED blinker thread, times are in milliseconds.
- */
-static THD_WORKING_AREA(waThread2, 4096);
-static THD_FUNCTION(Thread2, arg) {
+// UI thread
+static THD_WORKING_AREA(waThreadUI, 4096);
+static THD_FUNCTION(ThreadUI, arg) {
 
 	int old_pos[N_AXIS];
 	int inc_pos[N_AXIS];
@@ -175,7 +108,6 @@ static THD_FUNCTION(Thread2, arg) {
 	GEvent* pe;
 
 	bool_t inc_mode[N_AXIS];
-	bool_t zero_mode = false;
 
 	(void)arg;
 	chRegSetThreadName("display");
@@ -186,8 +118,6 @@ static THD_FUNCTION(Thread2, arg) {
 
 		chThdSleepMilliseconds(100);
 
-		if(!zero_mode)
-
 		pe = geventEventWait(&gl, 10);
  
 		switch(pe->type) {
@@ -197,7 +127,7 @@ static THD_FUNCTION(Thread2, arg) {
 					if (((GEventGWinButton*)pe)->gwin == ghButtonInc[i]) {
 						inc_mode[i] = !inc_mode[i];
 						if(inc_mode[i])
-							inc_pos[i] = pos_um[i];
+							inc_pos[i] = scales[i].pos_um;
 						gwinSetText(ghButtonInc[i], inc_mode[i] ? "INC" : "ABS", TRUE);
 						old_pos[i] = 1E9;	// forces refresh
 					}
@@ -209,10 +139,10 @@ static THD_FUNCTION(Thread2, arg) {
 
 		for(i=0; i<N_AXIS; i++)
 		{
-			if(old_pos[i] != pos_um[i])
+			if(old_pos[i] != scales[i].pos_um)
 			{
-				old_pos[i] = pos_um[i];
-				disp[i] = inc_mode[i] ? pos_um[i] - inc_pos[i] : pos_um[i];
+				old_pos[i] = scales[i].pos_um;
+				disp[i] = inc_mode[i] ? scales[i].pos_um - inc_pos[i] : scales[i].pos_um;
 
 				// This version does not use sprintf
 				ptr = buf;
@@ -225,11 +155,11 @@ static THD_FUNCTION(Thread2, arg) {
 					*ptr++ = ' ';
 
 				j = 100000;
-				while(j)
+				while(j>=10)
 				{
 					*ptr++ = '0' + (disp[i] / j);
 					disp[i] = disp[i] % j;
-					if(j==100)
+					if(j==1000)
 						*ptr++ = '.';
 					j = j/10;
 				}
@@ -244,10 +174,8 @@ static THD_FUNCTION(Thread2, arg) {
 	}
 }
 
-/*===========================================================================*/
-/* Command line related.                                                     */
-/*===========================================================================*/
 
+// Shell setup
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)
 
 void shl_rotate(BaseSequentialStream *chp, int argc, char *argv[])
@@ -279,7 +207,6 @@ void shl_rotate(BaseSequentialStream *chp, int argc, char *argv[])
 	};
 }
 
-
 static const ShellCommand commands[] = {
 	{"rotate", shl_rotate},
 	{NULL, NULL}
@@ -290,7 +217,7 @@ static const ShellConfig shell_cfg1 = {
 	commands
 };
 
-
+// Keyboard setup
 static const GVSpecialKey kbKeys[] = {
 	{ "\010", "\b", 0, 0 },							// \005 (5)	= Backspace
 	{ "\015", "\r", 0, 0 },								// \006 (6)	= Enter 1
@@ -322,180 +249,96 @@ static void createKeyboard(void) {
 	ghKeyboard = gwinKeyboardCreate(0, &wi);
 }
 
+void uiCreateMain(void)
+{
+	GWidgetInit		wi;
+	int i;
+ 
+	// Apply some default values for GWIN
+	wi.customDraw = 0;
+	wi.customParam = 0;
+	wi.customStyle = 0;
+	wi.g.show = TRUE;
+ 
+	// Apply the label parameters	
+	wi.g.y = 20;
+	wi.g.x = 40;
+	wi.g.width = 155;
+	wi.g.height = 40;
+	wi.text = "Label 1";
+ 
+	// Create the actual label
+	for(i=0; i<N_AXIS; i++)
+	{
+		ghLabel[i] = gwinLabelCreate(NULL, &wi);
+		wi.g.y += 70;
+	}
 
+	wi.g.x = 5;
+	wi.g.y = 20;
+	wi.text = "X";
+	ghLabel[i++] = gwinLabelCreate(NULL, &wi);
+	wi.g.y += 70;
+	wi.text = "Y";
+	ghLabel[i++] = gwinLabelCreate(NULL, &wi);
+	wi.g.y += 70;
+	wi.text = "Z";
+	ghLabel[i] = gwinLabelCreate(NULL, &wi);
 
-/*===========================================================================*/
-/* Initialization and main thread.                                           */
-/*===========================================================================*/
+	// Apply some default values for GWIN
+	gwinWidgetClearInit(&wi);
+	wi.g.show = TRUE;
+ 
+	// Apply the button parameters	
+	wi.g.width = 100;
+	wi.g.height = 60;
+	wi.g.y = 10;
+	wi.g.x = 220;
+	wi.text = "ABS";
+ 
+	// Create the actual button
+	for(i=0; i<N_AXIS; i++)
+	{
+		ghButtonInc[i] = gwinButtonCreate(NULL, &wi);
+		wi.g.y += 70;
+	}
+}
 
-/*
- * Application entry point.
- */
 int main(void)
 {
-	int i;
-
-	/*
-	 * System initializations.
-	 * - HAL initialization, this also initializes the configured device drivers
-	 *   and performs the board-specific initializations.
-	 * - Kernel initialization, the main() function becomes a thread and the
-	 *   RTOS is active.
-	 */
-		// Initialize ChibiOS/HAL and ChibiOS/RT. No need to do this as uGFX does that for you. See GFX_OS_NO_INIT setting.
 	halInit();
 	chSysInit();
-
-
-	// Initialize uGFX (This initializes ChibiOS/HAL and ChibiOS/RT internally. See GFX_OS_NO_INIT setting.
 	gfxInit();
 
-	/*
-	 * Creating the blinker threads.
-	 */
-	// chThdCreateStatic(waThread1, sizeof(waThread1),
-	// 									NORMALPRIO + 10, Thread1, NULL);
-
-	// Prepare some resources
-	font1 = gdispOpenFont("DejaVuSans32_aa");
-	// gdispImageOpenFile(&img1, "smiley.png");
+	// Setup scales drivers
+	scale_slave_init(scales);
+	scale_master_init(scales);
 
 	// Set the widget defaults
+	font1 = gdispOpenFont("DejaVuSans32_aa");
 	gwinSetDefaultFont(font1);
 	gwinSetDefaultStyle(&MyCustomStyle, FALSE);
 
-
-
-	// Draw some shapes using the GDISP module. API can be found here: http://api.ugfx.io/group___g_d_i_s_p.html
 	gdispClear(Black);
-	// gdispFillArea(10, 10, 50, 120, Blue);
-	// gdispDrawLine(25, 20, 150, 80, Red);
-	// gdispDrawCircle(180, 80, 65, Green);
+	uiCreateMain();
 
-	// Render some text (See https://wiki.ugfx.io/index.php/Font_rendering)
-	gdispDrawString(5, 8+10+5, "X", font1, Green);
-	gdispDrawString(5, 8+10+75, "Y", font1, Green);
-	gdispDrawString(5, 8+10+145, "Z", font1, Green);
-
-	// Render an image (See https://wiki.ugfx.io/index.php/Images)
-	// Note that we're using the ROMFS to load the image from the microcontrollers flash. (See https://wiki.ugfx.io/index.php/ROMFS)
-	// gdispImageDraw(&img1, 50, 80, img1.width, img1.width, 0, 0);
-
-	// Create a slider widget for demo purposes
-	// {
-	// 	 GWidgetInit wi;
-
-	// 	 gwinWidgetClearInit(&wi);
-
-	// 	 wi.g.x = 0;
-	// 	 wi.g.y = 200;
-	// 	 wi.g.width = 280;
-	// 	 wi.g.height = 40;
-	// 	 wi.g.show = TRUE;
-	// 	 wi.customDraw = 0;
-	// 	 wi.customParam = 0;
-	// 	 wi.customStyle = 0;
-	// 	 wi.text = "Slider";
-	// 	 ghSlider1 = gwinSliderCreate(0, &wi);
-	// 	 gwinShow(ghSlider1);
-	// }
-	{
-		GWidgetInit		wi;
-	 
-		// Apply some default values for GWIN
-		wi.customDraw = 0;
-		wi.customParam = 0;
-		wi.customStyle = 0;
-		wi.g.show = TRUE;
-	 
-		// Apply the label parameters	
-		wi.g.y = 20;
-		wi.g.x = 40;
-		wi.g.width = 155;
-		wi.g.height = 40;
-		wi.text = "Label 1";
-	 
-		// Create the actual label
-		for(i=0; i<N_AXIS; i++)
-		{
-			ghLabel[i] = gwinLabelCreate(NULL, &wi);
-			wi.g.y += 70;
-		}
-	}
-
-	// {
-	// 	GWidgetInit	wi;
-	 
-	// 	// Apply some default values for GWIN
-	// 	wi.customDraw = 0;
-	// 	wi.customParam = 0;
-	// 	wi.customStyle = 0;
-	// 	wi.g.show = TRUE;
-	 
-	// 	// Apply the checkbox parameters	
-	// 	wi.g.width = 100;		// includes text
-	// 	wi.g.height = 40;
-	// 	wi.g.y = 10;
-	// 	wi.g.x = 200;
-	// 	wi.text = "INC";
-	 
-	// 	// Create the actual checkbox 
-	// 	ghCheckbox1 = gwinCheckboxCreate(NULL, &wi);
-	// }
-	{
-		GWidgetInit	wi;
-	 
-		// Apply some default values for GWIN
-		gwinWidgetClearInit(&wi);
-		wi.g.show = TRUE;
-	 
-		// Apply the button parameters	
-		wi.g.width = 100;
-		wi.g.height = 60;
-		wi.g.y = 10;
-		wi.g.x = 220;
-		wi.text = "ABS";
-	 
-		// Create the actual button
-		for(i=0; i<N_AXIS; i++)
-		{
-			ghButtonInc[i] = gwinButtonCreate(NULL, &wi);
-			wi.g.y += 70;
-		}
-	}
 	// We want to listen for widget events
 	geventListenerInit(&gl);
 	gwinAttachListener(&gl);
 
-	chThdCreateStatic(waThreadScale, sizeof(waThreadScale),
-						HIGHPRIO, ThreadScale, NULL);
-	chThdCreateStatic(waThread2, sizeof(waThread2),
-						NORMALPRIO, Thread2, NULL);
+	chThdCreateStatic(waThreadUI, sizeof(waThreadUI),
+						NORMALPRIO, ThreadUI, NULL);
 
-	/*
-	 * Shell manager initialization.
-	 */
+	// Shell over USB setup
 	shellInit();
-
-	/*
-	 * Initializes a serial-over-USB CDC driver.
-	 */
 	sduObjectInit(&SDU1);
 	sduStart(&SDU1, &serusbcfg);
 
-	/*
-	 * Activates the USB driver and then the USB bus pull-up on D+.
-	 * Note, a delay is inserted in order to not have to disconnect the cable
-	 * after a reset.
-	 */
 	usbDisconnectBus(serusbcfg.usbp);
 	chThdSleepMilliseconds(1000);
 	usbStart(serusbcfg.usbp, &usbcfg);
 	usbConnectBus(serusbcfg.usbp);
 
-	/*
-	 * Normal main() thread activity, spawning shells.
-	 */
 	while (true) {
 		if (SDU1.config->usbp->state == USB_ACTIVE) {
 			thread_t *shelltp = chThdCreateFromHeap(NULL, SHELL_WA_SIZE,
@@ -505,4 +348,27 @@ int main(void)
 		}
 		chThdSleepMilliseconds(100);
 	}
+}
+
+bool_t LoadMouseCalibration(unsigned instance, void* data, size_t sz)
+{
+	(void) instance;
+	unsigned int *ptr = (unsigned int*) BKPSRAM_BASE;
+	if(*ptr == 0xdeadbeef)
+	{
+		ptr++;
+		memcpy(data, (void*) ptr, sz);
+		return true;
+	}
+	return false;
+}
+
+bool_t SaveMouseCalibration (unsigned instance, const void* data, size_t sz)
+{
+	(void) instance;
+	int *ptr = (int*) BKPSRAM_BASE;
+	int *bkp = (int*)(BKPSRAM_BASE + sizeof(int));
+	memcpy((void*) bkp, data, sz);
+	*ptr = 0xdeadbeef;
+	return true;
 }
