@@ -71,7 +71,7 @@ endif
 
 # Enables the use of FPU (no, softfp, hard).
 ifeq ($(USE_FPU),)
-  USE_FPU = no
+  USE_FPU = hard
 endif
 
 #
@@ -90,11 +90,11 @@ CHIBIOS = ChibiOS
 GFXLIB = ugfx
 
 # Startup files.
-include $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/mk/startup_stm32f4xx.mk
+include $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/mk/startup_stm32f7xx.mk
 # HAL-OSAL files (optional).
 include $(CHIBIOS)/os/hal/hal.mk
-include $(CHIBIOS)/os/hal/ports/STM32/STM32F4xx/platform.mk
-include $(CHIBIOS)/os/hal/boards/ST_STM32F429I_DISCOVERY/board.mk
+include $(CHIBIOS)/os/hal/ports/STM32/STM32F7xx/platform.mk
+include $(CHIBIOS)/os/hal/boards/ST_STM32F746G_DISCOVERY/board.mk
 include $(CHIBIOS)/os/hal/osal/rt/osal.mk
 # RTOS files (optional).
 include $(CHIBIOS)/os/rt/rt.mk
@@ -106,10 +106,13 @@ include $(CHIBIOS)/os/various/shell/shell.mk
 
 # ugfx files
 include $(GFXLIB)/gfx.mk
-include $(GFXLIB)/boards/base/STM32F429i-Discovery/chibios/board.mk
+include $(GFXLIB)/boards/base/STM32F746-Discovery/board.mk
+
+#Special - Required for the drivers for this discovery board.
+STMHAL    = ./STM32F7xx_HAL_Driver
 
 # Define linker script file here
-LDSCRIPT= $(STARTUPLD)/STM32F429xI.ld
+LDSCRIPT= $(STARTUPLD)/STM32F746xG.ld
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -211,6 +214,7 @@ CPPWARN = -Wall -Wextra -Wundef
 #
 
 # List all user C define here, like -D_DEBUG=1
+# UDEFS = -DGFX_USE_OS_CHIBIOS=GFXON
 UDEFS =
 
 # Define ASM defines here

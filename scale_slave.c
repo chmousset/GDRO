@@ -92,6 +92,21 @@ int scale_slave_io_init(SCALESLAVEDriver *drv)
 		extcfg.channels[drv->pin_clk].mode = 
 			EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART | EXT_MODE_GPIOC;
 #endif
+#if defined(GPIOD)
+	else if(drv->port_clk == GPIOD)
+		extcfg.channels[drv->pin_clk].mode = 
+			EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART | EXT_MODE_GPIOD;
+#endif
+#if defined(GPIOE)
+	else if(drv->port_clk == GPIOE)
+		extcfg.channels[drv->pin_clk].mode = 
+			EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART | EXT_MODE_GPIOE;
+#endif
+#if defined(GPIOF)
+	else if(drv->port_clk == GPIOF)
+		extcfg.channels[drv->pin_clk].mode = 
+			EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART | EXT_MODE_GPIOF;
+#endif
 	else
 		return -2;
 	return 0;

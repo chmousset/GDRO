@@ -30,26 +30,26 @@ SCALEDriver scales[] =
 {
 	{
 		.type = SCALE_MASTER_IGAGING,
-		.port_clk = GPIOB,
-		.pin_clk = 4,
-		.port_data = GPIOB,
-		.pin_data = 7,
+		.port_clk = GPIOA,
+		.pin_clk = 0,
+		.port_data = GPIOF,
+		.pin_data = 10,
 		.privdata = &scale_x_privdata
 	},
 	{
 		.type = SCALE_SLAVE_24B,
-		.port_clk = GPIOA,
-		.pin_clk = 7,
-		.port_data = GPIOA,
-		.pin_data = 5,
+		.port_clk = GPIOF,
+		.pin_clk = 9,
+		.port_data = GPIOF,
+		.pin_data = 8,
 		.privdata = &scale_y_privdata
 	},
 	{
 		.type = SCALE_MASTER_IGAGING,
-		.port_clk = GPIOC,
-		.pin_clk = 3,
-		.port_data = GPIOC,
-		.pin_data = 8,
+		.port_clk = GPIOF,
+		.pin_clk = 7,
+		.port_data = GPIOF,
+		.pin_data = 6,
 		.privdata = &scale_z_privdata
 	},
 	{.type = 0}
@@ -170,7 +170,7 @@ static THD_FUNCTION(ThreadUI, arg) {
 				chThdSleepMilliseconds(1);
 			}
 		}
-		palTogglePad(GPIOG, GPIOG_LED3_GREEN);
+		// palTogglePad(GPIOG, GPIOG_LED3_GREEN);
 	}
 }
 
