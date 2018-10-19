@@ -131,6 +131,7 @@ CSRC = $(STARTUPSRC) \
        usbcfg.c main.c \
        scale_slave.c \
        scale_master.c \
+       cancom.c \
 
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global

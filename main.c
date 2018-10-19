@@ -14,6 +14,7 @@
 
 #include "scale_master.h"
 #include "scale_slave.h"
+#include "cancom.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -338,6 +339,8 @@ int main(void)
 	chThdSleepMilliseconds(1000);
 	usbStart(serusbcfg.usbp, &usbcfg);
 	usbConnectBus(serusbcfg.usbp);
+
+	cancom_init();
 
 	while (true) {
 		if (SDU1.config->usbp->state == USB_ACTIVE) {
