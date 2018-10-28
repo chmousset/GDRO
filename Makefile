@@ -132,6 +132,11 @@ CSRC = $(STARTUPSRC) \
        scale_slave.c \
        scale_master.c \
        cancom.c \
+       ui.c \
+       app_disp.c \
+       app_settings.c \
+       app_thread.c \
+       scale.c \
 
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global

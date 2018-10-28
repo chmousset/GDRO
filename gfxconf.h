@@ -97,8 +97,8 @@
       #define GDISP_NEED_ANTIALIAS                     GFXON
       #define GDISP_NEED_UTF8                          GFXON
       #define GDISP_NEED_TEXT_KERNING                  GFXON
-//    #define GDISP_INCLUDE_FONT_UI1                   GFXOFF
-//    #define GDISP_INCLUDE_FONT_UI2                   GFXOFF		// The smallest preferred font.
+   #define GDISP_INCLUDE_FONT_UI1                   GFXON
+   #define GDISP_INCLUDE_FONT_UI2                   GFXON		// The smallest preferred font.
 //    #define GDISP_INCLUDE_FONT_LARGENUMBERS          GFXOFF
 //    #define GDISP_INCLUDE_FONT_DEJAVUSANS10          GFXOFF
 //    #define GDISP_INCLUDE_FONT_DEJAVUSANS12          GFXOFF
@@ -107,12 +107,12 @@
 //    #define GDISP_INCLUDE_FONT_DEJAVUSANS24          GFXOFF
 //    #define GDISP_INCLUDE_FONT_DEJAVUSANS32          GFXOFF
 //    #define GDISP_INCLUDE_FONT_DEJAVUSANSBOLD12      GFXOFF
-//    #define GDISP_INCLUDE_FONT_FIXED_10X20           GFXOFF
+   #define GDISP_INCLUDE_FONT_FIXED_10X20           GFXON
 //    #define GDISP_INCLUDE_FONT_FIXED_7X14            GFXOFF
 //    #define GDISP_INCLUDE_FONT_FIXED_5X8             GFXOFF
-//    #define GDISP_INCLUDE_FONT_DEJAVUSANS12_AA       GFXOFF
+// #define GDISP_INCLUDE_FONT_DEJAVUSANS12_AA          GFXOFF
 //    #define GDISP_INCLUDE_FONT_DEJAVUSANS16_AA       GFXOFF
-//    #define GDISP_INCLUDE_FONT_DEJAVUSANS20_AA       GFXOFF
+   #define GDISP_INCLUDE_FONT_DEJAVUSANS20_AA       GFXON
       #define GDISP_INCLUDE_FONT_DEJAVUSANS24_AA       GFXON
    #define GDISP_INCLUDE_FONT_DEJAVUSANS32_AA       GFXON
 //    #define GDISP_INCLUDE_FONT_DEJAVUSANSBOLD12_AA   GFXOFF
@@ -188,7 +188,8 @@
 //    #define GDISP_GFXNET_CUSTOM_LWIP_STARTUP         GFXOFF
 //    #define GDISP_DONT_WAIT_FOR_NET_DISPLAY          GFXOFF
 //    #define GDISP_GFXNET_UNSAFE_SOCKETS              GFXOFF
-
+#define GDISP_SCREEN_WIDTH      480
+#define GDISP_SCREEN_HEIGHT     272
 
 ///////////////////////////////////////////////////////////////////////////
 // GWIN                                                                  //
@@ -225,7 +226,7 @@
 //    #define GWIN_NEED_IMAGE                          GFXOFF
 //        #define GWIN_NEED_IMAGE_ANIMATION            GFXOFF
 //    #define GWIN_NEED_RADIO                          GFXOFF
-//    #define GWIN_NEED_LIST                           GFXOFF
+   #define GWIN_NEED_LIST                           GFXON
 //        #define GWIN_NEED_LIST_IMAGES                GFXOFF
 //    #define GWIN_NEED_PROGRESSBAR                    GFXOFF
 //        #define GWIN_PROGRESSBAR_AUTO                GFXOFF
@@ -236,10 +237,10 @@
 //    #define GWIN_FLAT_STYLING                        GFXOFF
 //    #define GWIN_WIDGET_TAGS                         GFXOFF
 
-//#define GWIN_NEED_CONTAINERS                         GFXOFF
+#define GWIN_NEED_CONTAINERS                         GFXON
 //    #define GWIN_NEED_CONTAINER                      GFXOFF
 //    #define GWIN_NEED_FRAME                          GFXOFF
-//    #define GWIN_NEED_TABSET                         GFXOFF
+   #define GWIN_NEED_TABSET                         GFXON
 //        #define GWIN_TABSET_TABHEIGHT                18
 
 

@@ -5,7 +5,7 @@
 #include "hal.h"
 #include "scale_slave.h"
 
-SCALESLAVEDriver *scales_slave[SCALE_MAX_INTERFACE];
+SCALEDriver *scales_slave[SCALE_MAX_INTERFACE];
 int scale_slave_count;
 
 EXTConfig extcfg = {
@@ -38,7 +38,7 @@ EXTConfig extcfg = {
 
 static void scale_slave_24b_cb(EXTDriver *extp, expchannel_t channel)
 {
-	volatile SCALESLAVEDriver *d;
+	volatile SCALEDriver *d;
 	int i;
 
 	(void)extp;
@@ -49,30 +49,30 @@ static void scale_slave_24b_cb(EXTDriver *extp, expchannel_t channel)
 		if(d->pin_clk != channel)
 			continue;
 
-		if(chVTGetSystemTimeX() - d->privdata->time_last > MS2ST(100))
+		if(chVTGetSystemTimeX() - d->priv.slave.time_last > MS2ST(100))
 		{
-			d->privdata->bits = 0;
-			d->privdata->pos_temp = 0;
+			d->priv.slave.bits = 0;
+			d->priv.slave.pos_temp = 0;
 		}
-		d->privdata->time_last = chVTGetSystemTimeX();
+		d->priv.slave.time_last = chVTGetSystemTimeX();
 
-		if(d->privdata->bits++ <= 23)
-			d->privdata->pos_temp = (d->privdata->pos_temp >> 1) |
+		if(d->priv.slave.bits++ <= 23)
+			d->priv.slave.pos_temp = (d->priv.slave.pos_temp >> 1) |
 				(palReadPad(d->port_data, d->pin_data) ? (1<<23) : 0);
-		if(d->privdata->bits == 24)
+		if(d->priv.slave.bits == 24)
 		{
-			if(d->privdata->pos_temp & 0x100000)
-				d->pos_um = -10 * (d->privdata->pos_temp & 0xFFFFF);
+			if(d->priv.slave.pos_temp & 0x100000)
+				d->pos_um = -10 * (d->priv.slave.pos_temp & 0xFFFFF);
 			else
-				d->pos_um = 10 * (d->privdata->pos_temp & 0xFFFFF);
-			d->privdata->bits = 0;
-			d->privdata->pos_temp = 0;
+				d->pos_um = 10 * (d->priv.slave.pos_temp & 0xFFFFF);
+			d->priv.slave.bits = 0;
+			d->priv.slave.pos_temp = 0;
 		}
 		return;
 	}
 }
 
-int scale_slave_io_init(SCALESLAVEDriver *drv)
+int scale_slave_io_init(SCALEDriver *drv)
 {
 	palSetPadMode(drv->port_clk, drv->pin_clk, PAL_MODE_INPUT);
 	palSetPadMode(drv->port_data, drv->pin_data, PAL_MODE_INPUT);
@@ -112,13 +112,13 @@ int scale_slave_io_init(SCALESLAVEDriver *drv)
 	return 0;
 }
 
-int scale_slave24b_init(SCALESLAVEDriver *drv)
+int scale_slave24b_init(SCALEDriver *drv)
 {
 	extcfg.channels[drv->pin_clk].cb = scale_slave_24b_cb;
 
 	drv->pos_um = 0;
-	drv->privdata->bits = 0;
-	drv->privdata->time_last = chVTGetSystemTimeX();
+	drv->priv.slave.bits = 0;
+	drv->priv.slave.time_last = chVTGetSystemTimeX();
 	drv->state = SCALE_RUNNING;
 	return 0;
 }
@@ -132,13 +132,13 @@ int scale_slave_init(SCALEDriver *drvs)
 		switch(drvs->type)
 		{
 			case SCALE_SLAVE_24B:
-				ret = scale_slave_io_init((SCALESLAVEDriver *) drvs);
+				ret = scale_slave_io_init((SCALEDriver *) drvs);
 				if(ret)
 					return ret;
-				ret = scale_slave24b_init((SCALESLAVEDriver *) drvs);
+				ret = scale_slave24b_init((SCALEDriver *) drvs);
 				if(ret)
 					return ret;
-				scales_slave[scale_slave_count++] = (SCALESLAVEDriver *) drvs;
+				scales_slave[scale_slave_count++] = (SCALEDriver *) drvs;
 				break;
 			default:
 				break;

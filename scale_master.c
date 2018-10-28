@@ -5,7 +5,7 @@
 #include "hal.h"
 #include "scale_master.h"
 
-SCALEMASTERDriver *scales_master[SCALE_MAX_INTERFACE];
+SCALEDriver *scales_master[SCALE_MAX_INTERFACE];
 int scales_master_count;
 
 
@@ -44,7 +44,7 @@ static THD_FUNCTION(ThreadScaleMaster, arg)
 			for(i=0; i<scales_master_count; i++)
 			{
 				palClearPad(scales_master[i]->port_clk, scales_master[i]->pin_clk);
-				scales_master[i]->privdata->pos_temp +=
+				scales_master[i]->priv.master.pos_temp +=
 					(palReadPad(scales_master[i]->port_data, scales_master[i]->pin_data) ? 1<<cnt_bits : 0);
 			}
 			cnt_bits++;
@@ -53,11 +53,11 @@ static THD_FUNCTION(ThreadScaleMaster, arg)
 		{
 			for(i=0; i<scales_master_count; i++)
 			{
-				if(scales_master[i]->privdata->pos_temp & (1<<20))
-					scales_master[i]->privdata->pos_temp =
-						scales_master[i]->privdata->pos_temp | 0xFFF00000; 	// sign extension
-				scales_master[i]->pos_um = scales_master[i]->privdata->pos_temp * 10;
-				scales_master[i]->privdata->pos_temp = 0;
+				if(scales_master[i]->priv.master.pos_temp & (1<<20))
+					scales_master[i]->priv.master.pos_temp =
+						scales_master[i]->priv.master.pos_temp | 0xFFF00000; 	// sign extension
+				scales_master[i]->pos_um = scales_master[i]->priv.master.pos_temp * 10;
+				scales_master[i]->priv.master.pos_temp = 0;
 			}
 			cnt_bits = 0;
 			cnt_pauses = 40;
@@ -76,7 +76,7 @@ int scale_master_init(SCALEDriver *drvs)
 			case SCALE_MASTER_IGAGING:
 				palSetPadMode(drvs->port_clk, drvs->pin_clk, PAL_MODE_OUTPUT_PUSHPULL);
 				palSetPadMode(drvs->port_data, drvs->pin_data, PAL_MODE_INPUT);
-				scales_master[scales_master_count++] = (SCALEMASTERDriver *) drvs;
+				scales_master[scales_master_count++] = (SCALEDriver *) drvs;
 				drvs->state = SCALE_RUNNING;
 				break;
 			default:

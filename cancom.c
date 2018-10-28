@@ -5,14 +5,14 @@
 #include "cancom.h"
 
 /*
- * Internal loopback mode, 500KBaud, automatic wakeup, automatic recover
+ * 500KBaud, automatic wakeup, automatic recover
  * from abort mode.
  * See section 22.7.7 on the STM32 reference manual.
  */
 static const CANConfig cancfg = {
-	.mcr = CAN_MCR_ABOM | CAN_MCR_AWUM | CAN_MCR_TXFP,
-	.btr = CAN_BTR_LBKM | CAN_BTR_SJW(0) | CAN_BTR_TS2(1) |
-			CAN_BTR_TS1(8) | CAN_BTR_BRP(6)
+	.mcr = CAN_MCR_ABOM | CAN_MCR_AWUM | CAN_MCR_TXFP | CAN_MCR_NART,
+	.btr = CAN_BTR_SJW(2) | CAN_BTR_TS2(1) |
+			CAN_BTR_TS1(12) | CAN_BTR_BRP(5)
 };
 
 /*
@@ -50,10 +50,10 @@ static THD_FUNCTION(can_tx, p) {
 	(void)p;
 	chRegSetThreadName("CANCom transmitter");
 	txmsg.IDE = CAN_IDE_EXT;
-	txmsg.EID = 0x01234567;
+	txmsg.EID = 0x01234568;
 	txmsg.RTR = CAN_RTR_DATA;
 	txmsg.DLC = 8;
-	txmsg.data32[0] = 0x55AA55AA;
+	txmsg.data32[0] = 0xDEADBEEF;
 	txmsg.data32[1] = 0x00FF00FF;
 
 	while (true) {
@@ -64,6 +64,8 @@ static THD_FUNCTION(can_tx, p) {
 
 void cancom_init(void)
 {
+	palSetPadMode(GPIOB, 8, PAL_MODE_ALTERNATE(9));
+	palSetPadMode(GPIOB, 9, PAL_MODE_ALTERNATE(9));
 	canStart(&CAND1, &cancfg);
 
 	chThdCreateStatic(can_rx_wa, sizeof(can_rx_wa), NORMALPRIO + 7,

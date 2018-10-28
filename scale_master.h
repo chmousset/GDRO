@@ -6,16 +6,7 @@
 
 #include "scale.h"
 
-typedef struct {
-	int32_t pos_temp;
-} SCALEMASTERPrivdata;
-
-typedef struct {
-	SCALE_DEFAULT_MEMBERS
-	SCALEMASTERPrivdata *privdata;
-} SCALEMASTERDriver;
-
 extern int scale_master_init(SCALEDriver *drvs);
-extern int scale_master_igaging_init(SCALEMASTERDriver *drv);
+extern int scale_master_igaging_init(SCALEDriver *drv);
 
 #endif
