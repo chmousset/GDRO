@@ -137,7 +137,6 @@ CSRC = $(STARTUPSRC) \
        app_settings.c \
        app_thread.c \
        scale.c \
-       except.c \
 
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
