@@ -57,11 +57,14 @@ static THD_FUNCTION(ThreadScaleMaster, arg)
 					scales_master[i]->priv.master.pos_temp =
 						scales_master[i]->priv.master.pos_temp | 0xFFF00000; 	// sign extension
 				scales_master[i]->pos_um = scales_master[i]->priv.master.pos_temp * 10;
+				scales_master[i]->pos_um *= 254;
+				scales_master[i]->pos_um /= 256;
 				scales_master[i]->priv.master.pos_temp = 0;
 			}
 			cnt_bits = 0;
 			cnt_pauses = 40;
 			half_bit = true;
+			chThdSleepMilliseconds(40);
 		}
 	}
 }
