@@ -94,7 +94,7 @@
    #define GDISP_NEED_TEXT_WORDWRAP                    GFXOFF
 //    #define GDISP_NEED_TEXT_BOXPADLR                 1
 //    #define GDISP_NEED_TEXT_BOXPADTB                 1
-      #define GDISP_NEED_ANTIALIAS                     GFXON
+      #define GDISP_NEED_ANTIALIAS                     GFXOFF
       #define GDISP_NEED_UTF8                          GFXON
       #define GDISP_NEED_TEXT_KERNING                  GFXON
    #define GDISP_INCLUDE_FONT_UI1                   GFXON
