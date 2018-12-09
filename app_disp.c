@@ -32,6 +32,9 @@ void cbButtonAbsInc(GEventGWin *we)
 		if (((GEventGWinButton*)we)->gwin == ghDispButtonAbsInc[i])
 		{
 			inc_mode[i] = !inc_mode[i];
+			old_pos[i] = 0;
+			if(inc_mode[i])
+				inc_pos[i] = scales[i].pos_um;
 			gwinSetText(ghDispButtonAbsInc[i], inc_mode[i] ? "INC" : "ABS", TRUE);
 			return;
 		}
