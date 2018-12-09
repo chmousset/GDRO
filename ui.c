@@ -65,6 +65,22 @@ const GWidgetStyle MyCustomStyle = {
 	}
 };
 
+
+// UI thread
+static char waUIThread[16000];
+gThreadreturn UIThread(void *arg)
+{
+	(void) arg;
+#if (GFX_USE_OS_CHIBIOS == GFXON)
+	chRegSetThreadName("UI main");
+#endif
+	while(1)
+	{
+		gfxSleepMilliseconds(10);
+		uiSimpleCallbackLoop();
+	}
+}
+
 void ui_init(void)
 {
 	font32 = gdispOpenFont("DejaVuSans32_aa");
@@ -75,6 +91,7 @@ void ui_init(void)
 	gdispClear(Black);
 	uiSimpleCallbackInit();
 	uiCreateMain();
+	gfxThreadCreate(waUIThread, sizeof(waUIThread), NORMALPRIO, UIThread, NULL);
 }
 
 void createKeyboard(void) {
@@ -107,9 +124,6 @@ void uiCreateMain(void)
 {
 	GWidgetInit	wi;
 
-	int v_pitch = 60;
-
-
 	// Apply some default values for GWIN
 	gwinWidgetClearInit(&wi);
 	wi.g.show = TRUE;
@@ -122,7 +136,6 @@ void uiCreateMain(void)
 	appDispInit(ghTabset, FALSE);
 	appThreadInit(ghTabset, FALSE);
 	appSettingsInit(ghTabset, FALSE);
-
 }
 
 int cb_cnt;
@@ -172,7 +185,7 @@ eventwatcher_t *uiSimpleCallbackGetNextEmpty(void)
 #endif
 }
 
-void uiSimpleCallbackAdd(GHandle gh, void (*callback)(GHandle))
+void uiSimpleCallbackAdd(GHandle gh, void (*callback)(GEventGWin *))
 {
 	eventwatcher_t *ptr;
 	ptr = uiSimpleCallbackGetNextEmpty();
@@ -188,7 +201,7 @@ void uiSimpleCallbackLoop(void)
 	GEvent *pe;
 	GEventGWin *we;
 
-	pe = geventEventWait(&gl, 10);
+	pe = geventEventWait(&gl, gDelayForever);
 	if(pe)
 	{
 
@@ -198,7 +211,7 @@ void uiSimpleCallbackLoop(void)
 		}
 		else
 		{
-			geventEventComplete(pe);
+			// geventEventComplete(&gl);
 			return;
 		}
 #if defined(UI_CALLBACK_STATIC_CNT)
@@ -225,6 +238,6 @@ void uiSimpleCallbackLoop(void)
 			ptr = ptr->next;
 		}
 #endif
-		geventEventComplete(we);
+		// geventEventComplete(&gl);
 	}
 }
