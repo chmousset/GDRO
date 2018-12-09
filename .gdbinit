@@ -1,9 +1,12 @@
 echo "# GDB script automatically connect to STM32F746-DISCO board"
-echo "# openocd must be started using the following command:"
-echo "  openocd -f interface/stlink.cfg -f target/stm32f7x.cfg"
+echo "use OpenOCD or st-util to connect to the debugger"
+
+echo "openocd -f interface/stlink.cfg -f target/stm32f7x.cfg"
+echo "  or"
+echo "st-util"
 
 file build/gdro.elf
-target remote :3333
+target remote :4242
 
 def lrun
 	load
