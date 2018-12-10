@@ -67,7 +67,6 @@ gThreadreturn DispThread(void *arg)
 				ptr = default_disp;
 				*ptr++ = axis_label[i];
 				*ptr++ = ' ';
-				*ptr++ = ' ';
 				if(disp[i] < 0)
 				{
 					*ptr++ = '-';
@@ -77,7 +76,7 @@ gThreadreturn DispThread(void *arg)
 					*ptr++ = ' ';
 
 				j = 1000000;
-				while(j>=10)
+				while(j>=1)
 				{
 					*ptr++ = '0' + (disp[i] / j);
 					disp[i] = disp[i] % j;
@@ -118,9 +117,9 @@ void appDispInit(GHandle parent, bool_t singleAppMode)
 	// Apply the label parameters
 	wi.g.y = PADDING;
 	wi.g.x = PADDING;
-	wi.g.width = 200;
+	wi.g.width = 210;
 	wi.g.height = APP_DISP_LABEL_HEIGHT;
-	wi.text = "X  -000.000";
+	wi.text = "X -000.000";
 	for(i=0; i<APP_DISP_MAX_AXIS; i++)
 	{
 		ghDispLabelPos[i] = gwinLabelCreate(0, &wi);
