@@ -4,7 +4,9 @@
 #include "ch.h"
 #include "scale.h"
 
-SCALEDriver scales[] =
+char axis_label[] = "XYZABCD";
+
+SCALEDriver scales[N_AXIS] =
 {
 	{
 		.type = SCALE_MASTER_IGAGING,
@@ -12,6 +14,8 @@ SCALEDriver scales[] =
 		.pin_clk = 0,
 		.port_data = GPIOF,
 		.pin_data = 10,
+		.res = RES_256cpi,
+		.flip = false
 	},
 	{
 		.type = SCALE_SLAVE_24B,
@@ -19,6 +23,8 @@ SCALEDriver scales[] =
 		.pin_clk = 9,
 		.port_data = GPIOF,
 		.pin_data = 8,
+		.res = RES_256cpi,
+		.flip = false,
 	},
 	{
 		.type = SCALE_MASTER_IGAGING,
@@ -26,6 +32,8 @@ SCALEDriver scales[] =
 		.pin_clk = 7,
 		.port_data = GPIOF,
 		.pin_data = 6,
+		.res = RES_256cpi,
+		.flip = false,
 	},
 	{.type = 0}
 };

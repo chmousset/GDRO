@@ -9,15 +9,17 @@
 #define SCALE_MAX_INTERFACE	3
 #define N_AXIS 6
 
+extern char axis_label[];
+
 typedef enum scale_resolution
 {
-	RES_10um,
-	RES_1um
+	RES_256cpi,
+	RES_2560cpi
 } scale_resolution;
 
 typedef enum scale_type_e
 {
-	SCALE_END = 0,
+	SCALE_DISABLE = 0,
 	SCALE_SLAVE_24B=1,
 	SCALE_MASTER_IGAGING,
 	SCALE_QEI			// Quadrature encoder interface
@@ -49,6 +51,7 @@ typedef struct
 	ioportid_t port_data;	/* port of data (or chan B of QEI) pin          */
 	unsigned int pin_data;	/* pin of data (or chan B of QEI) pin           */
 	scale_resolution res;	/* resolution of the scale                      */
+	bool flip;				/* Axis is flipped */
 	union
 	{
 		SCALEMASTERPrivdata master;

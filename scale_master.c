@@ -9,7 +9,6 @@ SCALEDriver *scales_master[SCALE_MAX_INTERFACE];
 int scales_master_count;
 
 
-
 static THD_WORKING_AREA(waThreadScaleMaster, 128);
 static THD_FUNCTION(ThreadScaleMaster, arg) 
 {
@@ -56,9 +55,13 @@ static THD_FUNCTION(ThreadScaleMaster, arg)
 				if(scales_master[i]->priv.master.pos_temp & (1<<20))
 					scales_master[i]->priv.master.pos_temp =
 						scales_master[i]->priv.master.pos_temp | 0xFFF00000; 	// sign extension
-				scales_master[i]->pos_um = scales_master[i]->priv.master.pos_temp * 10;
-				scales_master[i]->pos_um *= 254;
-				scales_master[i]->pos_um /= 256;
+				if(scales_master[i]->flip)
+					scales_master[i]->priv.master.pos_temp = -1 * scales_master[i]->priv.master.pos_temp;
+				if(scales_master[i]->res == RES_256cpi)
+					scales_master[i]->priv.master.pos_temp = scales_master[i]->priv.master.pos_temp * 10;
+				scales_master[i]->priv.master.pos_temp *= 254;
+				scales_master[i]->priv.master.pos_temp /= 256;
+				scales_master[i]->pos_um = scales_master[i]->priv.master.pos_temp;
 				scales_master[i]->priv.master.pos_temp = 0;
 			}
 			cnt_bits = 0;
