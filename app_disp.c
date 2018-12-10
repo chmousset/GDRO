@@ -13,7 +13,6 @@
 #define APP_DISP_MAX_AXIS ((GDISP_SCREEN_HEIGHT-20) / (APP_DISP_LABEL_HEIGHT+PADDING))
 #define APP_DISP_AXIS (APP_DISP_MAX_AXIS > N_AXIS? N_AXIS : APP_DISP_MAX_AXIS)
 
-char axis[] = "XYZABCD";
 char default_disp[] = "X  -0000.000";
 int old_pos[APP_DISP_AXIS];
 int inc_pos[APP_DISP_AXIS];
@@ -66,7 +65,7 @@ gThreadreturn DispThread(void *arg)
 
 				// This version does not use sprintf
 				ptr = default_disp;
-				*ptr++ = axis[i];
+				*ptr++ = axis_label[i];
 				*ptr++ = ' ';
 				*ptr++ = ' ';
 				if(disp[i] < 0)
@@ -127,7 +126,7 @@ void appDispInit(GHandle parent, bool_t singleAppMode)
 		ghDispLabelPos[i] = gwinLabelCreate(0, &wi);
 		wi.g.y += wi.g.height + PADDING;
 		
-		default_disp[0] = axis[i];
+		default_disp[0] = axis_label[i];
 		gwinSetText(ghDispLabelPos[i], default_disp, TRUE);
 	}
 
