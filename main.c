@@ -75,10 +75,6 @@ int main(void)
 
 	cancom_init();
 
-	// Setup scales drivers
-	scale_slave_init(scales);
-	scale_master_init(scales);
-
 	ui_init();
 
 	// Shell over USB setup
@@ -90,6 +86,10 @@ int main(void)
 	chThdSleepMilliseconds(1000);
 	usbStart(serusbcfg.usbp, &usbcfg);
 	usbConnectBus(serusbcfg.usbp);
+
+	// Setup scales drivers
+	scale_slave_init(scales);
+	scale_master_init(scales);
 
 
 	while (true) {
