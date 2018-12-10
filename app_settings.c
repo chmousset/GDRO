@@ -20,7 +20,6 @@ static GHandle ghListProtocol;
 static GHandle ghListAxis;
 static GHandle ghListResolution;
 static GHandle ghCheckboxFlipAxis;
-static GHandle ghButtonApply;
 static GHandle ghButtonSave;
 static GHandle ghButtonLoad;
 GHandle ghSettingsTab;
@@ -123,10 +122,9 @@ void appSettingsInit(GHandle parent, bool_t singleAppMode)
 	ghLabelSettingsAxis = gwinLabelCreate(0, &wi);
 	gwinSetFont(ghLabelSettingsAxis, font20);
 
-	wi.g.height = gdispGetHeight() / 2;
+	wi.g.height = gdispGetHeight() - 40;
 	wi.g.x = 0;
 	wi.g.y = 30;
-	wi.text = "Axis";
 	ghListAxis = gwinListCreate(0, &wi, gFalse);
 	gwinListSetScroll(ghListAxis, scrollSmooth);
 	gwinSetFont(ghListAxis, font20);
@@ -145,10 +143,9 @@ void appSettingsInit(GHandle parent, bool_t singleAppMode)
 	ghLabelSettingsProtocol = gwinLabelCreate(0, &wi);
 	gwinSetFont(ghLabelSettingsProtocol, font20);
 
-	wi.g.height = gdispGetHeight() / 2;
+	wi.g.height = gdispGetHeight() - 40;
 	wi.g.x = gdispGetWidth()/4;
 	wi.g.y = 30;
-	wi.text = "Protocol";
 	ghListProtocol = gwinListCreate(0, &wi, gFalse);
 	gwinListSetScroll(ghListProtocol, scrollSmooth);
 	gwinSetFont(ghListProtocol, font20);
@@ -166,10 +163,9 @@ void appSettingsInit(GHandle parent, bool_t singleAppMode)
 	ghLabelSettingsResolution = gwinLabelCreate(0, &wi);
 	gwinSetFont(ghLabelSettingsResolution, font20);
 
-	wi.g.height = gdispGetHeight() / 2;
+	wi.g.height = gdispGetHeight() - 40;
 	wi.g.x = gdispGetWidth()/2;
 	wi.g.y = 30;
-	wi.text = "Resolution";
 	ghListResolution = gwinListCreate(0, &wi, gFalse);
 	gwinListSetScroll(ghListResolution, scrollSmooth);
 	gwinSetFont(ghListResolution, font20);
@@ -179,19 +175,12 @@ void appSettingsInit(GHandle parent, bool_t singleAppMode)
 
 	// Flip axis checkbox
 	wi.g.width = gdispGetWidth()/4-PADDING;		// includes text
-	wi.g.height = 20;
+	wi.g.height = 40;
 	wi.g.y += PADDING;
 	wi.g.x = gdispGetWidth() - gdispGetWidth()/4 + PADDING;
 	wi.text = "Flip";
 	ghCheckboxFlipAxis = gwinCheckboxCreate(0, &wi);
 	gwinSetFont(ghCheckboxFlipAxis, font20);
-
-	// Apply button
-	wi.g.y += PADDING + wi.g.height;
-	wi.g.height = 30;
-	wi.text = "Apply";
-	ghButtonApply = gwinButtonCreate(0, &wi);
-	gwinSetFont(ghButtonApply, font20);
 
 	// Save button
 	wi.g.y += PADDING + wi.g.height;
@@ -209,7 +198,9 @@ void appSettingsInit(GHandle parent, bool_t singleAppMode)
 	uiSimpleCallbackAdd(ghListAxis, cbSettingsAxis);
 	uiSimpleCallbackAdd(ghButtonSave, cbSettingsSave);
 	uiSimpleCallbackAdd(ghButtonLoad, cbSettingsLoad);
-	uiSimpleCallbackAdd(ghButtonApply, cbSettingsApply);
+	uiSimpleCallbackAdd(ghCheckboxFlipAxis, cbSettingsApply);
+	uiSimpleCallbackAdd(ghListProtocol, cbSettingsApply);
+	uiSimpleCallbackAdd(ghListResolution, cbSettingsApply);
 
 	cbSettingsLoad(NULL);	// restore the defaults
 }
