@@ -37,6 +37,8 @@ void cbSettingsLoad(GEventGWin *we)
 
 	for(i=0; i<sizeof(scales); i++)
 		ptr[i] = ((uint8_t *) CONFIG_DATA)[i];
+
+	cbSettingsAxis(NULL);	// refresh the menu
 }
 
 void cbSettingsSave(GEventGWin *we)
