@@ -78,7 +78,7 @@ const GWidgetStyle MyCustomStyle = {
 
 
 // UI thread
-static char waUIThread[16000];
+static THD_WORKING_AREA(waUIThread, 512);
 gThreadreturn UIThread(void *arg)
 {
 	(void) arg;

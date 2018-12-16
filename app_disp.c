@@ -53,7 +53,7 @@ void cbButtonAbsInc(GEventGWin *we)
 
 
 // UI thread
-static char waDispThread[4096];
+static THD_WORKING_AREA(waDispThread, 251);
 gThreadreturn DispThread(void *arg)
 {
 	(void)arg;
