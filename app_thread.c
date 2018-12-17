@@ -15,38 +15,90 @@
 
 #include "ui.h"
 #include "gfx.h"
+#include "scale.h"
+#include "chprintf.h"
 
-// Pitch display and selection
-GHandle ghThreadButtonPitch;
-GHandle ghThreadLabelPitch;
-void cbButtonPitch(GEventGWin *we)
-{
-
-}
-
-GHandle ghThreadButtonSetHome;
-void cbButtonSetHome(GEventGWin *we)
-{
-
-}
-
-GHandle ghThreadButtonSetEnd;
-void cbButtonEnd(GEventGWin *we)
-{
-
-}
-
-GHandle ghThreadButtonSetHome;
-void cbButtonGotoHome(GEventGWin *we)
-{
-
-}
+float pitch, home, end, oldpitch, oldhome, oldend;
+int oldx, oldy, olda;
 
 // Machine position Labels
 GHandle ghThreadLabelPosX;
 GHandle ghThreadLabelPosY;
 GHandle ghThreadLabelPosA;
 GHandle ghThreadTab;
+// Pitch display and selection
+GHandle ghThreadButtonPitch;
+GHandle ghThreadLabelPitch;
+
+void cbButtonPitch(GEventGWin *we)
+{
+	(void) we;
+
+	keyboard_getfloat(&pitch);
+
+}
+
+GHandle ghThreadButtonSetHome;
+void cbButtonSetHome(GEventGWin *we)
+{
+	(void) we;
+	keyboard_getfloat(&home);
+
+}
+
+GHandle ghThreadButtonSetEnd;
+void cbButtonEnd(GEventGWin *we)
+{
+	(void) we;
+	keyboard_getfloat(&end);
+}
+
+GHandle ghThreadButtonSetHome;
+void cbButtonGotoHome(GEventGWin *we)
+{
+	(void) we;
+
+}
+
+// UI thread
+static THD_WORKING_AREA(waThreadThread, 128+256);
+gThreadreturn ThreadThread(void *arg)
+{
+	(void)arg;
+	char tmp[30];
+
+	chRegSetThreadName("Thread");
+	pitch = 0.0;
+	end = 0.0;
+	home = 0.0;
+	oldpitch = 0.0;
+	oldend = 0.0;
+	oldhome = 0.0;
+
+	while(true)
+	{
+		chThdSleepMilliseconds(20);
+		if(pitch != oldpitch)
+		{
+			chsnprintf(tmp, 30, "P  %.3f", pitch);
+			gwinSetText(ghThreadLabelPitch, tmp, TRUE);
+			oldpitch = pitch;
+		}
+		if(oldx != scales[2].pos_um)
+		{
+			chsnprintf(tmp, 30, "X  %03.3f", 0.001 * (float) scales[2].pos_um);
+			gwinSetText(ghThreadLabelPosX, tmp, TRUE);
+			oldx = scales[2].pos_um;
+		}
+		if(oldy != scales[0].pos_um)
+		{
+			chsnprintf(tmp, 30, "Y  %03.3f", 0.001 * (float) scales[0].pos_um);
+			gwinSetText(ghThreadLabelPosY, tmp, TRUE);
+			oldy = scales[0].pos_um;
+		}
+	}
+}
+
 void appThreadInit(GHandle parent, bool_t singleAppMode)
 {
 	// create widgets
@@ -97,12 +149,11 @@ void appThreadInit(GHandle parent, bool_t singleAppMode)
 	ghThreadButtonPitch = gwinButtonCreate(0, &wi);
 
 	// associate callbacks and widgets
+	uiSimpleCallbackAdd(ghThreadButtonPitch, cbButtonPitch);
+	uiSimpleCallbackAdd(ghThreadButtonSetHome, cbButtonSetHome);
 
+	// start thread
+	gfxThreadCreate((void*)waThreadThread, sizeof(waThreadThread), NORMALPRIO,
+		ThreadThread, NULL);
 
 }
-
-void appThreadStart()
-{
-	// Periodic task to send/receive CAN frames and display position
-}
-
