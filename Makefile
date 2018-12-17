@@ -131,6 +131,7 @@ CSRC = $(STARTUPSRC) \
        usbcfg.c main.c \
        scale_slave.c \
        scale_master.c \
+       scale_qei.c \
        cancom.c \
        ui.c \
        app_disp.c \
