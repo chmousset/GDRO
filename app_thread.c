@@ -87,13 +87,15 @@ gThreadreturn ThreadThread(void *arg)
 		}
 		if(oldx != scales[2].pos_um)
 		{
-			chsnprintf(tmp, 30, "X  %03.3f", 0.001 * (float) scales[2].pos_um);
+			tmp[0] = 'X'; tmp[1] = ' ';
+			um2s(&tmp[2], scales[2].pos_um);
 			gwinSetText(ghThreadLabelPosX, tmp, TRUE);
 			oldx = scales[2].pos_um;
 		}
 		if(oldy != scales[0].pos_um)
 		{
-			chsnprintf(tmp, 30, "Y  %03.3f", 0.001 * (float) scales[0].pos_um);
+			tmp[0] = 'Y'; tmp[1] = ' ';
+			um2s(&tmp[2], scales[0].pos_um);
 			gwinSetText(ghThreadLabelPosY, tmp, TRUE);
 			oldy = scales[0].pos_um;
 		}
