@@ -72,9 +72,14 @@ static const ShellCommand commands[] = {
 	{NULL, NULL}
 };
 
+char histbuff[128] = "";
+
 static const ShellConfig shell_cfg1 = {
 	(BaseSequentialStream *)&SDU1,
-	commands
+	commands,
+	histbuff,
+	sizeof(histbuff),
+	.sc_completion = NULL
 };
 
 
