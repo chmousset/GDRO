@@ -15,6 +15,9 @@
 #if !defined(APP_SETTINGS_H)
 #define APP_SETTINGS_H
 
+void cbSettingsLoad(GEventGWin *we);
+void cbSettingsSave(GEventGWin *we);
+void cbSettingsAxis(GEventGWin *we);
 void appSettingsInit(GHandle parent, bool_t singleAppMode);
 
 #endif

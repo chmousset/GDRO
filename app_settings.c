@@ -17,6 +17,7 @@
 #include "gfx.h"
 #include "scale.h"
 #include "flash.h"
+#include "app_settings.h"
 
 #define APP_DISP_LABEL_HEIGHT	45
 
