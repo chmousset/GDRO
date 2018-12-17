@@ -38,6 +38,9 @@ extern void uiSimpleCallbackInit(void);
 extern void uiSimpleCallbackAdd(GHandle gh, void (*callback)(GEventGWin *));
 void uiSimpleCallbackLoop(void);
 
+void keyboard_getfloat(float *value);
+void um2s(char *ptr, int um);
+
 extern font_t font20;
 
 #endif
