@@ -19,6 +19,8 @@
 #include "app_disp.h"
 #include "app_settings.h"
 #include "app_thread.h"
+#include <stdlib.h>
+#include <string.h>
 
 // #define UI_CALLBACK_STATIC_CNT 100
 #if defined(UI_CALLBACK_STATIC_CNT)
@@ -42,8 +44,15 @@ const GVKeyTable kbNumPad = { kbKeys, kbSet };
 font_t font32;
 font_t font20;
 
+static GHandle ghTabset;
+static GHandle ghKeyboardFrame;
 static GHandle ghConsole;
 static GHandle ghKeyboard;
+static GHandle ghButtonValueCancel;
+static GHandle ghButtonValueOk;
+float *kbValuePtr;
+char kbStr[32] = "";
+unsigned int kbStrIdx = 0;
 
 static GListener gl;
 
@@ -92,44 +101,109 @@ gThreadreturn UIThread(void *arg)
 	}
 }
 
-void ui_init(void)
+void cbButtonCancel(GEventGWin *we)
 {
-	font32 = gdispOpenFont("DejaVuSans32_aa");
-	font20 = gdispOpenFont("DejaVuSans20_aa");
-	gwinSetDefaultFont(font32);
-	gwinSetDefaultStyle(&MyCustomStyle, FALSE);
-
-	gdispClear(Black);
-	uiSimpleCallbackInit();
-	uiCreateMain();
-	gfxThreadCreate(waUIThread, sizeof(waUIThread), NORMALPRIO, UIThread, NULL);
+	(void) we;
+	gwinHide(ghKeyboardFrame);
+	gwinShow(ghTabset);
 }
 
-void createKeyboard(void) {
-	GWidgetInit		wi;
+void cbButtonOk(GEventGWin *we)
+{
+	if(kbValuePtr)
+		*kbValuePtr = (float)atof(kbStr);
+	cbButtonCancel(we);
+}
 
+void cbKeyboard(GEventKeyboard *pk)
+{
+	int i;
+
+	i = 0;
+	while (pk->bytecount--)
+	{
+		if(pk->c[i] == 0x08)	// backspace
+		{
+			kbStr[kbStrIdx] = 0;
+			if(kbStrIdx)
+				kbStrIdx--;
+		}
+		else if(pk->c[i] == 2)	// ok key
+			cbButtonOk(NULL);
+		else if(pk->c[i] == 'X')
+			cbButtonCancel(NULL);
+		else
+		{
+			if(kbStrIdx < sizeof(kbStr)-1)
+			{
+				kbStr[kbStrIdx++] = pk->c[i];
+				kbStr[kbStrIdx] = 0;
+			}
+		}
+		gwinPrintf(ghConsole, "%02X\n", pk->c[i]);
+		i++;
+	}
+}
+
+static GHandle ghButtonValueOk;
+void createKeyboard(void)
+{
+	GWidgetInit wi;
+
+	// Apply some default values for GWIN
 	gwinWidgetClearInit(&wi);
+	wi.g.show = FALSE;
+
+	// Apply the frame parameters
+	wi.g.width = GDISP_SCREEN_WIDTH;
+	wi.g.height = GDISP_SCREEN_HEIGHT;
+	wi.g.y = 0;
+	wi.g.x = 0;
+	wi.text = "Enter Number";
+	ghKeyboardFrame = gwinFrameCreate(0, &wi, 0);
+	wi.g.show = TRUE;
+	wi.g.parent = ghKeyboardFrame;
 
 	// Create the console - set colors before making it visible
-	wi.g.show = gFalse;
 	wi.g.x = 0; wi.g.y = 0;
-	wi.g.width = gdispGetWidth()/2; wi.g.height = gdispGetHeight();
+	wi.g.width /= 2; wi.g.height -= 60;
 	ghConsole = gwinConsoleCreate(0, &wi.g);
 	gwinSetColor(ghConsole, GFX_BLACK);
 	gwinSetBgColor(ghConsole, HTML2COLOR(0xF0F0F0));
-	gwinShow(ghConsole);
 	gwinClear(ghConsole);
 
+	// Apply the button parameters
+	wi.g.y += wi.g.height;
+	wi.g.x = 0;
+	wi.g.width = GDISP_SCREEN_WIDTH/4;
+	wi.g.height = 40;
+	wi.text = "Cancel";
+	ghButtonValueCancel = gwinButtonCreate(0, &wi);
+
+	wi.g.x += wi.g.width;
+	wi.text = "OK";
+	ghButtonValueOk = gwinButtonCreate(0, &wi);
+
 	// Create the keyboard
-	wi.g.show = gTrue;
-	wi.g.x = gdispGetWidth()/2; wi.g.y = 0;
-	wi.g.width = gdispGetWidth()/2; wi.g.height = gdispGetHeight();
+	wi.g.x = GDISP_SCREEN_WIDTH/2; wi.g.y = 0;
+	wi.g.width = wi.g.x;
+	wi.g.height = GDISP_SCREEN_HEIGHT-20;
 	ghKeyboard = gwinKeyboardCreate(0, &wi);
+
+	kbValuePtr = NULL;
+
+	uiSimpleCallbackAdd(ghButtonValueOk, cbButtonOk);
+	uiSimpleCallbackAdd(ghButtonValueCancel, cbButtonCancel);
 }
 
-GHandle		ghTabset;
-GHandle		ghPageDisplay, ghPage2, ghPageSettings;
-GHandle		ghLabel_1, ghLabel_2, ghLabel_3;
+void keyboard_getfloat(float *value)
+{
+	kbValuePtr = value;
+	kbStrIdx = 0;
+	gwinHide(ghTabset);
+	gwinShow(ghKeyboardFrame);
+}
+
 
 void uiCreateMain(void)
 {
@@ -147,6 +221,24 @@ void uiCreateMain(void)
 	appDispInit(ghTabset, FALSE);
 	appThreadInit(ghTabset, FALSE);
 	appSettingsInit(ghTabset, FALSE);
+}
+
+void ui_init(void)
+{
+	font32 = gdispOpenFont("DejaVuSans32_aa");
+	font20 = gdispOpenFont("DejaVuSans20_aa");
+	gwinSetDefaultFont(font32);
+	gwinSetDefaultStyle(&MyCustomStyle, FALSE);
+
+	gdispClear(Black);
+	uiSimpleCallbackInit();
+	uiCreateMain();
+
+	// Create keyboard and attach the key press events
+	createKeyboard();
+	geventAttachSource(&gl, gwinKeyboardGetEventSource(ghKeyboard), GLISTEN_KEYTRANSITIONS|GLISTEN_KEYUP);
+
+	gfxThreadCreate(waUIThread, sizeof(waUIThread), NORMALPRIO, UIThread, NULL);
 }
 
 int cb_cnt;
@@ -215,7 +307,11 @@ void uiSimpleCallbackLoop(void)
 	pe = geventEventWait(&gl, gDelayForever);
 	if(pe)
 	{
-
+		if(pe->type == GEVENT_KEYBOARD)
+		{
+			cbKeyboard((GEventKeyboard *)pe);
+			return;
+		}
 		if(pe->type > GEVENT_GWIN_FIRST && pe->type < GEVENT_GADC_FIRST)
 		{
 			we = (GEventGWin*)pe;
@@ -225,6 +321,7 @@ void uiSimpleCallbackLoop(void)
 			// geventEventComplete(&gl);
 			return;
 		}
+
 #if defined(UI_CALLBACK_STATIC_CNT)
 		int i;
 		for(i=0; i<UI_CALLBACK_STATIC_CNT; i++)
@@ -251,4 +348,27 @@ void uiSimpleCallbackLoop(void)
 #endif
 		// geventEventComplete(&gl);
 	}
+}
+
+// micrometer to string. Make sure your string is >= 8 chars
+void um2s(char *ptr, int um)
+{
+	int j = 1000000;
+	if(um < 0)
+	{
+		*ptr++ = '-';
+		um = -1 * um;
+	}
+	else
+		*ptr++ = ' ';
+
+	while(j>=1)
+	{
+		*ptr++ = '0' + (um / j);
+		um = um % j;
+		if(j==1000)
+			*ptr++ = '.';
+		j = j/10;
+	}
+	*ptr++ = 0;
 }
