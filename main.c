@@ -26,6 +26,7 @@
 #include "scale.h"
 #include "scale_master.h"
 #include "scale_slave.h"
+#include "scale_qei.h"
 #include "cancom.h"
 #include <stdlib.h>
 #include <string.h>
@@ -106,7 +107,7 @@ int main(void)
 	// Setup scales drivers
 	scale_slave_init(scales);
 	scale_master_init(scales);
-
+	scale_qei_init(scales);
 
 	while (true) {
 		if (SDU1.config->usbp->state == USB_ACTIVE) {

@@ -20,6 +20,7 @@
 
 float pitch, home, end, oldpitch, oldhome, oldend;
 int oldx, oldy, olda;
+uint32_t oldqei;
 
 // Machine position Labels
 GHandle ghThreadLabelPosX;
@@ -95,6 +96,13 @@ gThreadreturn ThreadThread(void *arg)
 			chsnprintf(tmp, 30, "Y  %03.3f", 0.001 * (float) scales[0].pos_um);
 			gwinSetText(ghThreadLabelPosY, tmp, TRUE);
 			oldy = scales[0].pos_um;
+		}
+		if(oldqei != GPTD8.tim->CNT)
+		{
+			oldqei = GPTD8.tim->CNT;
+			tmp[0] = 'A'; tmp[1] = ' ';
+			um2s(&tmp[2], (oldqei * 254)/6);
+			gwinSetText(ghThreadLabelPosA, tmp, TRUE);
 		}
 	}
 }
