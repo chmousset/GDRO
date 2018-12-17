@@ -53,11 +53,11 @@ void cbButtonAbsInc(GEventGWin *we)
 
 
 // UI thread
-static THD_WORKING_AREA(waDispThread, 251);
+static THD_WORKING_AREA(waDispThread, 256);
 gThreadreturn DispThread(void *arg)
 {
 	(void)arg;
-	int i, j;
+	int i;
 	char *ptr;
 
 	chRegSetThreadName("Display");
@@ -78,31 +78,12 @@ gThreadreturn DispThread(void *arg)
 				ptr = default_disp;
 				*ptr++ = axis_label[i];
 				*ptr++ = ' ';
-				if(disp[i] < 0)
-				{
-					*ptr++ = '-';
-					disp[i] = -1 * disp[i];
-				}
-				else
-					*ptr++ = ' ';
 
-				j = 1000000;
-				while(j>=1)
-				{
-					*ptr++ = '0' + (disp[i] / j);
-					disp[i] = disp[i] % j;
-					if(j==1000)
-						*ptr++ = '.';
-					j = j/10;
-				}
-				*ptr++ = 0;
-				// sprintf(default_disp, "%c%d.%02d", disp[i] < 0 ? '-' : ' ', abs(disp[i]) / 1000,
-				// 		(abs(disp[i]) % 1000) / 10);
+				um2s(ptr, disp[i]);
 				gwinSetText(ghDispLabelPos[i], default_disp, TRUE);
 				chThdSleepMilliseconds(1);
 			}
 		}
-		// palTogglePad(GPIOG, GPIOG_LED3_GREEN);
 	}
 }
 
