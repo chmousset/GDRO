@@ -67,7 +67,7 @@ No-name stuff
 -------------
 Amazon/ebay/aliexpress/banggood are the usual suspects for cheap and relatively low quality stuff. You will find mostly Capacitive scales (type "igaging" or "digital scale" or "DRO"), in all sizes. I advise you stick with the 'iGaging' style scales, as they are of decent resolution (0.01mm) and can have a good refresh rate.
 
-You will also be able to find glass scales, tough most of them will be limited to 5µm resolution as they use 20µm grating scales. Most of them don't even list the resolution (or intentionally mislead you by giving the resolution as being the precision), so unless you want to use their quadrature output as feedback for a servomotor system, it might not be worth the extra cost compared to capacitive scales.
+You will also be able to find glass scales, tough most of them will be limited to 5µm resolution as they use 20µm grating scales. Most of them don't even list the precision (or intentionally mislead you by giving the resolution as being the precision), so unless you want to use their quadrature output as feedback for a servomotor system, it might not be worth the extra cost compared to capacitive scales.
 
 Popular brands
 --------------
