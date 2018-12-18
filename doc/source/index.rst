@@ -13,6 +13,7 @@ Welcome to GDRO's documentation!
    about
    scales
    protocols
+   ui
 
 Indices and tables
 ==================

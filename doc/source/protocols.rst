@@ -50,7 +50,3 @@ Data is sent LSB first, on rising edge of the clok signal. GDRO then reads its v
 It seems like these Scales can only output 0.01mm resolution, but shumatech states a resolution of 2560 CPI
 GDRO drives the clock at 10kHz, and updates the position at ~250Hz.
 Also, it is powered from the 3.3V rail, directly.
-
-These come in three categories:
-
-'Master' 

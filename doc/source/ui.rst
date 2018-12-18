@@ -1,20 +1,26 @@
-================
-UI state machine
-================
+==============
+User Interface
+==============
 
-UI is run by a state machine. Each state correspond to a different view.
+The user interface is fully modular, thanks to a 'Tabset' widget, and a simple callback mechanism which makes it trivial to handle interactions with the user.
+Each 'app' is displayed on its own tab, so it can use nearly all of the screen real estate.
 
-Coordinates View
-=================
-This is the default state.
-This simply displays the X,Y,Z, RPM and Gauge.
-From there, the `Setup View`_ and 
+Some apps are using a thread, which makes sure the periodic tasks are run when they have to.
 
-Setup View
+All apps are seperated in their own source file, `app_*.c`
+
+app_display
+===========
+This is the default app.
+This simply displays the values of the different positions.
+All the positions can be displayed in absolute or incremental mode.
+
+app_thread
 ==========
-Allows to setup the scales types, resolution etc.
-From there, you can only go to the 
+This app is meant to setup a Step10V controller used for threading operation.
+The spindle of a lathe is fitted with an encoder, and the lead screw is fitted with a servomotor, enabling threading on lathes that don't have threading gears.
 
-Menu View
-=========
-Allows to access the different Views.
+app_settings
+============
+Allows to modify, save or load the configuration.
+Note: After the type of interface has been modified, it's necessary to save the settings, then reset GDRO.
