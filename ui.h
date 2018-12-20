@@ -17,7 +17,7 @@
 
 #include "gfx.h"
 
-#define PADDING		5
+#define PADDING		4
 
 struct EVENTWATCHER
 {
