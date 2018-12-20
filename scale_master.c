@@ -68,11 +68,13 @@ static THD_FUNCTION(ThreadScaleMaster, arg)
 						scales_master[i]->priv.master.pos_temp | 0xFFF00000; 	// sign extension
 				if(scales_master[i]->flip)
 					scales_master[i]->priv.master.pos_temp = -1 * scales_master[i]->priv.master.pos_temp;
-				if(scales_master[i]->res == RES_256cpi)
+				if(scales_master[i]->res == RES_2560cpi)
 					scales_master[i]->priv.master.pos_temp = scales_master[i]->priv.master.pos_temp * 10;
+				if(scales_master[i]->res == RES_256cpi)
+					scales_master[i]->priv.master.pos_temp = scales_master[i]->priv.master.pos_temp * 100;
 				scales_master[i]->priv.master.pos_temp *= 254;
 				scales_master[i]->priv.master.pos_temp /= 256;
-				scales_master[i]->pos_um = scales_master[i]->priv.master.pos_temp;
+				scales_master[i]->pos_um = (volatile) scales_master[i]->priv.master.pos_temp;
 				scales_master[i]->priv.master.pos_temp = 0;
 			}
 			cnt_bits = 0;

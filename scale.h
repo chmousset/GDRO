@@ -25,7 +25,8 @@ extern char axis_label[];
 typedef enum scale_resolution
 {
 	RES_256cpi,
-	RES_2560cpi
+	RES_2560cpi,
+	RES_25600cpi
 } scale_resolution;
 
 typedef enum scale_type_e
@@ -72,5 +73,6 @@ typedef struct
 } SCALEDriver;
 
 extern SCALEDriver scales[N_AXIS];
+void scale_default(void);
 
 #endif
