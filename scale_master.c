@@ -74,7 +74,7 @@ static THD_FUNCTION(ThreadScaleMaster, arg)
 					scales_master[i]->priv.master.pos_temp = scales_master[i]->priv.master.pos_temp * 100;
 				scales_master[i]->priv.master.pos_temp *= 254;
 				scales_master[i]->priv.master.pos_temp /= 256;
-				scales_master[i]->pos_um = (volatile) scales_master[i]->priv.master.pos_temp;
+				scales_master[i]->pos_um = (volatile int) scales_master[i]->priv.master.pos_temp;
 				scales_master[i]->priv.master.pos_temp = 0;
 			}
 			cnt_bits = 0;
@@ -94,7 +94,8 @@ int scale_master_init(SCALEDriver *drvs)
 		{
 			case SCALE_MASTER_IGAGING:
 				palSetPadMode(drvs->port_clk, drvs->pin_clk, PAL_MODE_OUTPUT_PUSHPULL);
-				palSetPadMode(drvs->port_data, drvs->pin_data, PAL_MODE_INPUT);
+				palSetPadMode(drvs->port_data, drvs->pin_data,
+					drvs->pullup ? PAL_MODE_INPUT_PULLUP : PAL_MODE_INPUT);
 				scales_master[scales_master_count++] = (SCALEDriver *) drvs;
 				drvs->state = SCALE_RUNNING;
 				break;

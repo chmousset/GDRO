@@ -28,7 +28,8 @@ static SCALEDriver scales_default[N_AXIS] =
 		.port_data = GPIOF,
 		.pin_data = 10,
 		.res = RES_2560cpi,
-		.flip = false
+		.flip = false,
+		.pullup = false,
 	},
 	{
 		.type = SCALE_MASTER_IGAGING,
@@ -38,6 +39,7 @@ static SCALEDriver scales_default[N_AXIS] =
 		.pin_data = 8,
 		.res = RES_2560cpi,
 		.flip = false,
+		.pullup = false,
 	},
 	{
 		.type = SCALE_MASTER_IGAGING,
@@ -47,6 +49,7 @@ static SCALEDriver scales_default[N_AXIS] =
 		.pin_data = 6,
 		.res = RES_2560cpi,
 		.flip = false,
+		.pullup = false,
 	},
 	{
 		.type = SCALE_SLAVE_24B,
@@ -56,6 +59,7 @@ static SCALEDriver scales_default[N_AXIS] =
 		.pin_data = 2,
 		.res = RES_25600cpi,
 		.flip = false,
+		.pullup = true,
 	},
 	{.type = 0}
 };

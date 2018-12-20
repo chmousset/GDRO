@@ -64,6 +64,7 @@ typedef struct
 	unsigned int pin_data;	/* pin of data (or chan B of QEI) pin           */
 	scale_resolution res;	/* resolution of the scale                      */
 	bool flip;				/* Axis is flipped */
+	bool pullup;			/* Enable pullups on the inputs                 */
 	union
 	{
 		SCALEMASTERPrivdata master;

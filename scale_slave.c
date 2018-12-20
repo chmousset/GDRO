@@ -81,7 +81,7 @@ static void scale_slave_24b_cb(EXTDriver *extp, expchannel_t channel)
 			if(d->res == RES_256cpi)
 				d->priv.slave.pos_temp *= 100;
 
-			d->pos_um = (volatile) d->priv.slave.pos_temp;
+			d->pos_um = (volatile int) d->priv.slave.pos_temp;
 			d->priv.slave.bits = 0;
 			d->priv.slave.pos_temp = 0;
 		}
@@ -91,8 +91,10 @@ static void scale_slave_24b_cb(EXTDriver *extp, expchannel_t channel)
 
 int scale_slave_io_init(SCALEDriver *drv)
 {
-	palSetPadMode(drv->port_clk, drv->pin_clk, PAL_MODE_INPUT);
-	palSetPadMode(drv->port_data, drv->pin_data, PAL_MODE_INPUT);
+	palSetPadMode(drv->port_clk, drv->pin_clk,
+		drv->pullup ? PAL_MODE_INPUT_PULLUP : PAL_MODE_INPUT);
+	palSetPadMode(drv->port_data, drv->pin_data,
+		drv->pullup ? PAL_MODE_INPUT_PULLUP : PAL_MODE_INPUT);
 	if(extcfg.channels[drv->pin_clk].mode != EXT_CH_MODE_DISABLED)
 		return -1;
 	
