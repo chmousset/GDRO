@@ -105,6 +105,9 @@ int main(void)
 	usbConnectBus(serusbcfg.usbp);
 
 	// Setup scales drivers
+	int i;
+	for(i=0; i<N_AXIS; i++)
+		scales[i].state = SCALE_UNINIT;
 	scale_slave_init(scales);
 	scale_master_init(scales);
 	scale_qei_init(scales);
@@ -118,27 +121,4 @@ int main(void)
 		}
 		chThdSleepMilliseconds(100);
 	}
-}
-
-bool_t LoadMouseCalibration(unsigned instance, void* data, size_t sz)
-{
-	(void) instance;
-	unsigned int *ptr = (unsigned int*) BKPSRAM_BASE;
-	if(*ptr == 0xdeadbeef)
-	{
-		ptr++;
-		memcpy(data, (void*) ptr, sz);
-		return true;
-	}
-	return false;
-}
-
-bool_t SaveMouseCalibration (unsigned instance, const void* data, size_t sz)
-{
-	(void) instance;
-	int *ptr = (int*) BKPSRAM_BASE;
-	int *bkp = (int*)(BKPSRAM_BASE + sizeof(int));
-	memcpy((void*) bkp, data, sz);
-	*ptr = 0xdeadbeef;
-	return true;
 }
