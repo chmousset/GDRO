@@ -72,9 +72,12 @@ static void scale_slave_24b_cb(EXTDriver *extp, expchannel_t channel)
 				(palReadPad(d->port_data, d->pin_data) ? (1<<23) : 0);
 		if(d->priv.slave.bits == 24)
 		{
-			d->priv.slave.pos_temp &= 0xFFFFF;
-			if(d->priv.slave.pos_temp & 0x100000)
+			d->priv.slave.pos_temp &= 0x001FFFFF;
+			if(d->priv.slave.pos_temp & 0x00100000)
+			{
+				d->priv.slave.pos_temp &= 0x000FFFFF;
 				d->priv.slave.pos_temp *= -1;
+			}
 
 			if(d->res == RES_2560cpi)
 				d->priv.slave.pos_temp *= 10;
