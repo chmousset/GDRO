@@ -84,7 +84,10 @@ static THD_FUNCTION(ThreadScaleMaster, arg)
 	chRegSetThreadName("scale master");
 	while (true)
 	{
-		chThdSleepMilliseconds(40);
+		do
+		{
+			chThdSleepMilliseconds(40);
+		} while(GPTD1.state != GPT_STOP);
 		gptStart(&GPTD1, &gptcfg);
 		gptStartContinuous(&GPTD1, 100);
 	}
