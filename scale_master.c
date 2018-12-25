@@ -27,13 +27,13 @@ void scale_master_loop(GPTDriver *drv)
 
 	if(cnt_bits < 21)
 	{
-		if(half_bit)
+		half_bit = !half_bit;
+		if(!half_bit)
 		{
 			for(i=0; i<scales_master_count; i++)
 				palSetPad(scales_master[i]->port_clk, scales_master[i]->pin_clk);
 			return;
 		}
-		half_bit = !half_bit;
 		
 		for(i=0; i<scales_master_count; i++)
 		{
@@ -87,7 +87,7 @@ static THD_FUNCTION(ThreadScaleMaster, arg)
 		do
 		{
 			chThdSleepMilliseconds(40);
-		} while(GPTD1.state != GPT_STOP);
+		} while(GPTD1.state == GPT_CONTINUOUS);
 		gptStart(&GPTD1, &gptcfg);
 		gptStartContinuous(&GPTD1, 100);
 	}
