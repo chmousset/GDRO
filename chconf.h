@@ -39,6 +39,7 @@
 #define SHELL_USE_HISTORY           TRUE
 #define SHELL_USE_COMPLETION        TRUE
 #define SHELL_USE_ESC_SEQ           TRUE
+#define SHELL_MAX_ARGUMENTS         12
 
 
 /*===========================================================================*/

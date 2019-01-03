@@ -39,6 +39,27 @@
 // Shell setup
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)
 
+void shl_can(BaseSequentialStream *chp, int argc, char *argv[])
+{
+	CANTxFrame tx;
+	if(argc < 1)
+	{
+		chprintf(chp, "can <id> [data] [data] ...");
+		return;
+	}
+	tx.SID = atoi(argv[0]);
+	tx.IDE = CAN_IDE_STD;
+	tx.RTR = CAN_RTR_DATA;
+	tx.DLC = 0;
+	int i;
+	for(i=1; i< argc; i++)
+	{
+		tx.data8[i-1] = atoi(argv[i]);
+		tx.DLC++;
+	}
+	canTransmit(&CAND1, CAN_ANY_MAILBOX, &tx,  MS2ST(100));
+}
+
 void shl_rotate(BaseSequentialStream *chp, int argc, char *argv[])
 {
 	switch(argc)
@@ -69,6 +90,7 @@ void shl_rotate(BaseSequentialStream *chp, int argc, char *argv[])
 }
 
 static const ShellCommand commands[] = {
+	{"can", shl_can},
 	{"rotate", shl_rotate},
 	{NULL, NULL}
 };

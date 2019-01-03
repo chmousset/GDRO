@@ -14,6 +14,9 @@
 
 #include "hal.h"
 #include "cancom.h"
+#include "usbcfg.h"
+#include "chprintf.h"
+
 
 /*
  * 500KBaud, automatic wakeup, automatic recover
@@ -46,31 +49,14 @@ static THD_FUNCTION(can_rx, p) {
 											&rxmsg, TIME_IMMEDIATE) == MSG_OK) {
 			/* Process message.*/
 			palTogglePad(GPIOI, 1);
+			chprintf(&SDU1, "Got CAN frame %03X %d", rxmsg.SID, rxmsg.DLC);
+			int i;
+			for(i=0; i<rxmsg.DLC; i++)
+				chprintf(&SDU1, " %02X", rxmsg.data8[i]);
+			chprintf(&SDU1, "\r\n");
 		}
 	}
 	chEvtUnregister(&CAND1.rxfull_event, &el);
-}
-
-/*
- * Transmitter thread.
- */
-static THD_WORKING_AREA(can_tx_wa, 256);
-static THD_FUNCTION(can_tx, p) {
-	CANTxFrame txmsg;
-
-	(void)p;
-	chRegSetThreadName("CANCom transmitter");
-	txmsg.IDE = CAN_IDE_EXT;
-	txmsg.EID = 0x01234568;
-	txmsg.RTR = CAN_RTR_DATA;
-	txmsg.DLC = 8;
-	txmsg.data32[0] = 0xDEADBEEF;
-	txmsg.data32[1] = 0x00FF00FF;
-
-	while (true) {
-		canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, MS2ST(100));
-		chThdSleepMilliseconds(500);
-	}
 }
 
 void cancom_init(void)
@@ -81,6 +67,4 @@ void cancom_init(void)
 
 	chThdCreateStatic(can_rx_wa, sizeof(can_rx_wa), NORMALPRIO + 7,
 										can_rx, NULL);
-	chThdCreateStatic(can_tx_wa, sizeof(can_tx_wa), NORMALPRIO + 7,
-										can_tx, NULL);
 }
