@@ -72,10 +72,19 @@ static void scale_slave_24b_cb(EXTDriver *extp, expchannel_t channel)
 				(palReadPad(d->port_data, d->pin_data) ? (1<<23) : 0);
 		if(d->priv.slave.bits == 24)
 		{
-			if(d->priv.slave.pos_temp & 0x100000)
-				d->pos_um = -10 * (d->priv.slave.pos_temp & 0xFFFFF);
-			else
-				d->pos_um = 10 * (d->priv.slave.pos_temp & 0xFFFFF);
+			d->priv.slave.pos_temp &= 0x001FFFFF;
+			if(d->priv.slave.pos_temp & 0x00100000)
+			{
+				d->priv.slave.pos_temp &= 0x000FFFFF;
+				d->priv.slave.pos_temp *= -1;
+			}
+
+			if(d->res == RES_2560cpi)
+				d->priv.slave.pos_temp *= 10;
+			if(d->res == RES_256cpi)
+				d->priv.slave.pos_temp *= 100;
+
+			d->pos_um = (volatile int) d->priv.slave.pos_temp;
 			d->priv.slave.bits = 0;
 			d->priv.slave.pos_temp = 0;
 		}
@@ -85,8 +94,10 @@ static void scale_slave_24b_cb(EXTDriver *extp, expchannel_t channel)
 
 int scale_slave_io_init(SCALEDriver *drv)
 {
-	palSetPadMode(drv->port_clk, drv->pin_clk, PAL_MODE_INPUT);
-	palSetPadMode(drv->port_data, drv->pin_data, PAL_MODE_INPUT);
+	palSetPadMode(drv->port_clk, drv->pin_clk,
+		drv->pullup ? PAL_MODE_INPUT_PULLUP : PAL_MODE_INPUT);
+	palSetPadMode(drv->port_data, drv->pin_data,
+		drv->pullup ? PAL_MODE_INPUT_PULLUP : PAL_MODE_INPUT);
 	if(extcfg.channels[drv->pin_clk].mode != EXT_CH_MODE_DISABLED)
 		return -1;
 	
@@ -118,8 +129,24 @@ int scale_slave_io_init(SCALEDriver *drv)
 		extcfg.channels[drv->pin_clk].mode = 
 			EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART | EXT_MODE_GPIOF;
 #endif
+#if defined(GPIOG)
+	else if(drv->port_clk == GPIOG)
+		extcfg.channels[drv->pin_clk].mode = 
+			EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART | EXT_MODE_GPIOG;
+#endif
+#if defined(GPIOH)
+	else if(drv->port_clk == GPIOH)
+		extcfg.channels[drv->pin_clk].mode = 
+			EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART | EXT_MODE_GPIOH;
+#endif
+#if defined(GPIOI)
+	else if(drv->port_clk == GPIOI)
+		extcfg.channels[drv->pin_clk].mode = 
+			EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART | EXT_MODE_GPIOI;
+#endif
 	else
 		return -2;
+	drv->state = SCALE_RUNNING;
 	return 0;
 }
 

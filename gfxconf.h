@@ -241,7 +241,7 @@
 //    #define GWIN_NEED_CONTAINER                      GFXOFF
    #define GWIN_NEED_FRAME                          GFXON
    #define GWIN_NEED_TABSET                         GFXON
-//        #define GWIN_TABSET_TABHEIGHT                18
+       #define GWIN_TABSET_TABHEIGHT                30
 
 
 ///////////////////////////////////////////////////////////////////////////
@@ -292,8 +292,8 @@
 //    #define GINPUT_MOUSE_POLL_PERIOD                 25
 //    #define GINPUT_MOUSE_CLICK_TIME                  300
 //    #define GINPUT_TOUCH_CXTCLICK_TIME               700
-   #define GINPUT_TOUCH_USER_CALIBRATION_LOAD       GFXON
-   #define GINPUT_TOUCH_USER_CALIBRATION_SAVE       GFXON
+   // #define GINPUT_TOUCH_USER_CALIBRATION_LOAD       GFXON
+   // #define GINPUT_TOUCH_USER_CALIBRATION_SAVE       GFXON
 //    #define GMOUSE_DRIVER_LIST                       GMOUSEVMT_Win32, GMOUSEVMT_Win32
 //    #define GINPUT_TOUCH_CALIBRATION_FONT1           "* Double"
 //    #define GINPUT_TOUCH_CALIBRATION_FONT2           "* Narrow"

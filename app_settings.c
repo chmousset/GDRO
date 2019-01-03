@@ -32,8 +32,10 @@ static GHandle ghListProtocol;
 static GHandle ghListAxis;
 static GHandle ghListResolution;
 static GHandle ghCheckboxFlipAxis;
+static GHandle ghCheckboxPullups;
 static GHandle ghButtonSave;
 static GHandle ghButtonLoad;
+static GHandle ghButtonDefault;
 GHandle ghSettingsTab;
 
 void cbSettingsLoad(GEventGWin *we)
@@ -44,7 +46,11 @@ void cbSettingsLoad(GEventGWin *we)
 	unsigned int i;
 
 	if(size_data != sizeof(scales))
-		return;	// saved data is invalid
+	{
+		// saved data incommpatible/blank, so apply defaults
+		scale_default();
+		return;
+	}
 
 	for(i=0; i<sizeof(scales); i++)
 		ptr[i] = ((uint8_t *) CONFIG_DATA)[i];
@@ -74,6 +80,13 @@ void cbSettingsSave(GEventGWin *we)
 	flash_lock();
 }
 
+void cbSettingsDefault(GEventGWin *we)
+{
+	(void) we;
+	scale_default();
+	cbSettingsAxis(NULL);	// refresh the menu
+}
+
 void cbSettingsAxis(GEventGWin *we)
 {
 	(void) we;
@@ -98,9 +111,12 @@ void cbSettingsAxis(GEventGWin *we)
 		case RES_256cpi:
 			/* Falls through. */
 		case RES_2560cpi:
+			/* Falls through. */
+		case RES_25600cpi:
 			gwinListSetSelected(ghListResolution, s->res, gTrue);
 	};
 	gwinCheckboxCheck(ghCheckboxFlipAxis, s->flip);
+	gwinCheckboxCheck(ghCheckboxPullups, s->pullup);
 }
 
 void cbSettingsApply(GEventGWin *we)
@@ -110,6 +126,7 @@ void cbSettingsApply(GEventGWin *we)
 	s->type = gwinListGetSelected(ghListProtocol);
 	s->res = gwinListGetSelected(ghListResolution);
 	s->flip = gwinCheckboxIsChecked(ghCheckboxFlipAxis);
+	s->pullup = gwinCheckboxIsChecked(ghCheckboxPullups);
 }
 
 void appSettingsInit(GHandle parent, bool_t singleAppMode)
@@ -184,15 +201,22 @@ void appSettingsInit(GHandle parent, bool_t singleAppMode)
 
 	gwinListAddItem(ghListResolution, "256cpi", gFalse);
 	gwinListAddItem(ghListResolution, "2560cpi", gFalse);
+	gwinListAddItem(ghListResolution, "25600cpi", gFalse);
 
 	// Flip axis checkbox
 	wi.g.width = gdispGetWidth()/4-PADDING;		// includes text
-	wi.g.height = 40;
+	wi.g.height = 35;
 	wi.g.y += PADDING;
 	wi.g.x = gdispGetWidth() - gdispGetWidth()/4 + PADDING;
 	wi.text = "Flip";
 	ghCheckboxFlipAxis = gwinCheckboxCreate(0, &wi);
 	gwinSetFont(ghCheckboxFlipAxis, font20);
+
+	// Pulldown checkbox
+	wi.g.y += wi.g.height + PADDING;
+	wi.text = "Pullups";
+	ghCheckboxPullups = gwinCheckboxCreate(0, &wi);
+	gwinSetFont(ghCheckboxPullups, font20);
 
 	// Save button
 	wi.g.y += PADDING + wi.g.height;
@@ -206,6 +230,11 @@ void appSettingsInit(GHandle parent, bool_t singleAppMode)
 	ghButtonLoad = gwinButtonCreate(0, &wi);
 	gwinSetFont(ghButtonLoad, font20);
 
+	// Default button
+	wi.g.y += PADDING + wi.g.height;
+	wi.text = "Default";
+	ghButtonDefault = gwinButtonCreate(0, &wi);
+	gwinSetFont(ghButtonDefault, font20);
 
 	uiSimpleCallbackAdd(ghListAxis, cbSettingsAxis);
 	uiSimpleCallbackAdd(ghButtonSave, cbSettingsSave);
@@ -213,6 +242,7 @@ void appSettingsInit(GHandle parent, bool_t singleAppMode)
 	uiSimpleCallbackAdd(ghCheckboxFlipAxis, cbSettingsApply);
 	uiSimpleCallbackAdd(ghListProtocol, cbSettingsApply);
 	uiSimpleCallbackAdd(ghListResolution, cbSettingsApply);
+	uiSimpleCallbackAdd(ghButtonDefault, cbSettingsDefault);
 
-	cbSettingsLoad(NULL);	// restore the defaults
+	cbSettingsLoad(NULL);	// restore the saved settings
 }

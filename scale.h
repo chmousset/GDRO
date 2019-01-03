@@ -25,7 +25,8 @@ extern char axis_label[];
 typedef enum scale_resolution
 {
 	RES_256cpi,
-	RES_2560cpi
+	RES_2560cpi,
+	RES_25600cpi
 } scale_resolution;
 
 typedef enum scale_type_e
@@ -63,6 +64,7 @@ typedef struct
 	unsigned int pin_data;	/* pin of data (or chan B of QEI) pin           */
 	scale_resolution res;	/* resolution of the scale                      */
 	bool flip;				/* Axis is flipped */
+	bool pullup;			/* Enable pullups on the inputs                 */
 	union
 	{
 		SCALEMASTERPrivdata master;
@@ -72,5 +74,6 @@ typedef struct
 } SCALEDriver;
 
 extern SCALEDriver scales[N_AXIS];
+void scale_default(void);
 
 #endif
