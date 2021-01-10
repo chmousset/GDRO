@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "ui.h"
+#include "motion.h"
 
 
 #define TRUE 1
@@ -92,6 +93,8 @@ void shl_rotate(BaseSequentialStream *chp, int argc, char *argv[])
 static const ShellCommand commands[] = {
 	{"can", shl_can},
 	{"rotate", shl_rotate},
+	{"pos", shlPos},
+	{"en", shlEn},
 	{NULL, NULL}
 };
 
@@ -99,6 +102,13 @@ char histbuff[128] = "";
 
 static const ShellConfig shell_cfg1 = {
 	(BaseSequentialStream *)&SDU1,
+	commands,
+	histbuff,
+	sizeof(histbuff),
+	.sc_completion = NULL
+};
+static const ShellConfig shell_cfg_base = {
+	(BaseSequentialStream *)&SD1,
 	commands,
 	histbuff,
 	sizeof(histbuff),
@@ -115,16 +125,22 @@ int main(void)
 	cancom_init();
 
 	ui_init();
+	motion_init();
 
 	// Shell over USB setup
 	shellInit();
 	sduObjectInit(&SDU1);
-	sduStart(&SDU1, &serusbcfg);
+	palSetLineMode(LINE_VCP_TX, PAL_MODE_ALTERNATE(7));
+	palSetLineMode(LINE_VCP_RX, PAL_MODE_ALTERNATE(7));
+	sdStart(&SD1, NULL);
+	chprintf(&SD1, "hello world");
+	chThdCreateFromHeap(NULL, SHELL_WA_SIZE, "base shell", NORMALPRIO, shellThread, (void *)&shell_cfg_base);
+	// sduStart(&SDU1, &serusbcfg);
 
-	usbDisconnectBus(serusbcfg.usbp);
-	chThdSleepMilliseconds(1000);
-	usbStart(serusbcfg.usbp, &usbcfg);
-	usbConnectBus(serusbcfg.usbp);
+	// usbDisconnectBus(serusbcfg.usbp);
+	// chThdSleepMilliseconds(1000);
+	// usbStart(serusbcfg.usbp, &usbcfg);
+	// usbConnectBus(serusbcfg.usbp);
 
 	// Setup scales drivers
 	int i;
@@ -135,12 +151,12 @@ int main(void)
 	scale_qei_init(scales);
 
 	while (true) {
-		if (SDU1.config->usbp->state == USB_ACTIVE) {
-			thread_t *shelltp = chThdCreateFromHeap(NULL, SHELL_WA_SIZE,
-													"shell", NORMALPRIO + 1,
-													shellThread, (void *)&shell_cfg1);
-			chThdWait(shelltp);               /* Waiting termination.             */
-		}
+		// if (SDU1.config->usbp->state == USB_ACTIVE) {
+		// 	thread_t *shelltp = chThdCreateFromHeap(NULL, SHELL_WA_SIZE,
+		// 											"shell", NORMALPRIO + 1,
+		// 											shellThread, (void *)&shell_cfg1);
+		// 	chThdWait(shelltp);               /* Waiting termination.             */
+		// }
 		chThdSleepMilliseconds(100);
 	}
 }

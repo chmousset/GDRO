@@ -19,6 +19,7 @@
 #include "app_disp.h"
 #include "app_settings.h"
 #include "app_thread.h"
+#include "app_cnc.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -221,6 +222,7 @@ void uiCreateMain(void)
 	appDispInit(ghTabset, FALSE);
 	appThreadInit(ghTabset, FALSE);
 	appSettingsInit(ghTabset, FALSE);
+	appCNCInit(ghTabset, FALSE);
 }
 
 void ui_init(void)
@@ -353,7 +355,7 @@ void uiSimpleCallbackLoop(void)
 // micrometer to string. Make sure your string is >= 8 chars
 void um2s(char *ptr, int um)
 {
-	int j = 1000000;
+	int j = 100000;
 	if(um < 0)
 	{
 		*ptr++ = '-';

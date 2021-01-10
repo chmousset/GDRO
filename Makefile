@@ -25,7 +25,7 @@ endif
 
 # Linker extra options here.
 ifeq ($(USE_LDOPT),)
-  USE_LDOPT = 
+  USE_LDOPT = -lm
 endif
 
 # Enable this if you want link time optimizations (LTO)
@@ -137,8 +137,10 @@ CSRC = $(STARTUPSRC) \
        app_disp.c \
        app_settings.c \
        app_thread.c \
+       app_cnc.c \
        scale.c \
        flash.c \
+       motion.c \
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
